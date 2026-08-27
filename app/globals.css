@@ -3,12 +3,27 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
+  --card: #f8fafc;
+  --border: #e2e8f0;
+}
+
+@theme {
+  --color-paper: #ffffff;
+  --color-panel: #f8fafc;
+  --color-ink: #0f172a;
+  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
   background-color: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   margin: 0;
   padding: 0;
 }
@@ -16,4 +31,27 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.pipeline-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+.gazette-grid {
+  background-image:
+    linear-gradient(to right, rgb(226 232 240 / 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(226 232 240 / 0.45) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
