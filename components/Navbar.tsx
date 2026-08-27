@@ -5,17 +5,18 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const LINKS = [
-  { href: '/', label: 'Motore di Risposta' },
-  { href: '/atti', label: 'Archivio Atti' },
-  { href: '/osservatorio', label: 'Osservatorio' },
+  { href: '/atti', label: 'Archivio & Filtri' },
+  { href: '/osservatorio', label: 'Osservatorio Ritardi & Potere' },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+  const isActive = (href: string) => {
+    if (href === '/atti') return pathname === '/' || pathname.startsWith('/atti');
+    return pathname.startsWith(href);
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
@@ -34,7 +35,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 text-sm font-medium md:flex">
+        <nav className="hidden items-center gap-1 text-sm font-medium lg:flex">
           {LINKS.map((link) => (
             <Link
               key={link.href}
@@ -51,7 +52,7 @@ export function Navbar() {
           <Link
             href="/trasparenza"
             className={`ml-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-              isActive('/trasparenza')
+              pathname.startsWith('/trasparenza')
                 ? 'border-slate-900 bg-slate-900 text-white'
                 : 'border-slate-300 bg-slate-50 text-slate-700 hover:border-slate-400'
             }`}
@@ -62,7 +63,7 @@ export function Navbar() {
 
         <button
           type="button"
-          className="rounded-lg border border-slate-200 p-2 text-slate-700 md:hidden"
+          className="rounded-lg border border-slate-200 p-2 text-slate-700 lg:hidden"
           aria-expanded={open}
           aria-label="Apri menu"
           onClick={() => setOpen((v) => !v)}
@@ -74,7 +75,7 @@ export function Navbar() {
       </div>
 
       {open && (
-        <div className="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
+        <div className="border-t border-slate-200 bg-white px-4 py-3 lg:hidden">
           <div className="flex flex-col gap-1 text-sm font-medium">
             {LINKS.map((link) => (
               <Link

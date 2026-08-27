@@ -49,9 +49,6 @@ a {
   animation: pulse-dot 1.6s ease-in-out infinite;
 }
 
-.gazette-grid {
-  background-image:
-    linear-gradient(to right, rgb(226 232 240 / 0.45) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(226 232 240 / 0.45) 1px, transparent 1px);
-  background-size: 48px 48px;
+.gazette-prose {
+  font-variant-numeric: oldstyle-nums;
 }

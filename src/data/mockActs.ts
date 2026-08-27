@@ -5,125 +5,70 @@ export type IterStatus =
   | 'promulgata';
 
 export type Iniziativa = 'governo' | 'parlamentare' | 'popolare';
-export type Materia = 'trasporti' | 'fisco' | 'sanita' | 'giustizia' | 'lavoro';
+export type Materia = 'codice_strada' | 'fisco' | 'sanita' | 'lavoro' | 'giustizia';
 export type Copertura = 'invarianza' | 'a_debito' | 'tagli_spesa';
-export type StepStatus = 'done' | 'current' | 'pending';
 
-export type IterStep = {
-  id: string;
-  label: string;
-  status: StepStatus;
-};
-
-export type Citation = {
-  id: number;
-  source: string;
-  excerpt: string;
-};
-
-export type VoteShare = {
-  party: string;
-  color: string;
-  favorevoli: number;
-  contrari: number;
-  astenuti: number;
-};
-
-export type CitizenPoint = {
-  text: string;
-  citationIds: number[];
-};
-
-export type DeepChapter = {
-  title: string;
-  body: string;
-};
-
-export type LegalDiff = {
-  article: string;
-  oldText: string;
-  newText: string;
+export type LawArticle = {
+  number: string;
+  heading: string;
+  original: string;
+  structured: string;
+  simple: string;
 };
 
 export type Act = {
   id: string;
   code: string;
-  title: string;
+  formalTitle: string;
+  officialTitle: string;
+  popularTitle: string;
   summary: string;
   date: string;
+  publishedAt: string | null;
+  inForceAt: string | null;
+  sourceUrl: string;
+  sourceLabel: string;
   iniziativa: Iniziativa;
   materia: Materia;
   copertura: Copertura;
   iterStatus: IterStatus;
-  iterSteps: IterStep[];
   decreesMissing: number;
   decreeDeadline: string | null;
   financialNote: string;
-  amendmentsApproved: number;
-  closedDoorNote: string;
   omnibusRisk: { article: string; description: string } | null;
   lobbyCheck: { similarity: number; source: string } | null;
   urgency: number;
-  inDiscussionThisWeek: boolean;
   keywords: string[];
-  cittadino: CitizenPoint[];
-  approfondito: DeepChapter[];
-  giurista: LegalDiff[];
-  citations: Citation[];
-  votes: VoteShare[];
   ministry: string;
-  ragLead: string;
+  preamble: string;
+  articles: LawArticle[];
 };
-
-export const ITER_STEPS_TEMPLATE: Omit<IterStep, 'status'>[] = [
-  { id: 'presentazione', label: 'Presentazione' },
-  { id: 'commissione', label: 'Commissione' },
-  { id: 'aula', label: 'Aula Camera' },
-  { id: 'navetta', label: 'Navetta Senato' },
-  { id: 'gu', label: 'Gazzetta Ufficiale' },
-];
-
-function steps(currentIndex: number, lastDone = false): IterStep[] {
-  return ITER_STEPS_TEMPLATE.map((step, i) => {
-    if (lastDone) return { ...step, status: 'done' as const };
-    if (i < currentIndex) return { ...step, status: 'done' as const };
-    if (i === currentIndex) return { ...step, status: 'current' as const };
-    return { ...step, status: 'pending' as const };
-  });
-}
-
-const VOTES_CAMERA: VoteShare[] = [
-  { party: 'FdI', color: '#1d4ed8', favorevoli: 118, contrari: 2, astenuti: 0 },
-  { party: 'PD', color: '#e11d48', favorevoli: 8, contrari: 62, astenuti: 4 },
-  { party: 'M5S', color: '#f59e0b', favorevoli: 3, contrari: 48, astenuti: 1 },
-  { party: 'Lega', color: '#16a34a', favorevoli: 61, contrari: 4, astenuti: 1 },
-  { party: 'FI', color: '#0ea5e9', favorevoli: 43, contrari: 1, astenuti: 0 },
-  { party: 'AVS', color: '#65a30d', favorevoli: 2, contrari: 19, astenuti: 2 },
-  { party: 'Azione', color: '#7c3aed', favorevoli: 9, contrari: 2, astenuti: 1 },
-];
 
 export const MOCK_ACTS: Act[] = [
   {
-    id: 'ddl-1435',
-    code: 'DDL AC 1435',
-    title: 'Revisione del Codice della Strada e sicurezza stradale',
+    id: 'legge-105-2026',
+    code: 'L. 105/2026',
+    formalTitle: 'LEGGE 24 luglio 2026, n. 105',
+    officialTitle:
+      'Disposizioni in materia di sicurezza stradale e di modifica al decreto legislativo 30 aprile 1992, n. 285.',
+    popularTitle: 'Riforma del Codice della Strada',
     summary:
-      'Nuove sanzioni per uso di smartphone alla guida, obbligo di contrassegno e RC per i monopattini, revisione dei limiti per i neopatentati.',
-    date: '2026-07-14',
+      'Sanzioni per l’uso del telefono alla guida, contrassegno e RC per i monopattini, limiti per i neopatentati.',
+    date: '2026-07-24',
+    publishedAt: '2026-07-25',
+    inForceAt: '2026-08-09',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
     iniziativa: 'governo',
-    materia: 'trasporti',
+    materia: 'codice_strada',
     copertura: 'invarianza',
-    iterStatus: 'in_aula',
-    iterSteps: steps(2),
+    iterStatus: 'promulgata',
     decreesMissing: 2,
     decreeDeadline: '2026-06-30',
     financialNote:
-      'Invarianza finanziaria: zero nuovi fondi stanziati. I controlli restano a carico delle risorse ordinarie della Polizia di Stato e delle polizie locali.',
-    amendmentsApproved: 14,
-    closedDoorNote:
-      'Testo modificato in Commissione Trasporti (IX) a porte chiuse prima del trasferimento in Aula: 14 emendamenti approvati, 3 subemendamenti del relatore.',
+      'Clausola di invarianza finanziaria: zero nuovi fondi. I controlli restano a carico delle risorse ordinarie della Polizia di Stato e delle polizie locali.',
     omnibusRisk: {
-      article: 'Art. 24-bis',
+      article: 'Art. 5',
       description:
         'Proroga delle concessioni autostradali: materia semanticamente estranea al Codice della Strada (topic-drift 0,71).',
     },
@@ -132,7 +77,6 @@ export const MOCK_ACTS: Act[] = [
       source: 'Memoria ANIASA depositata in audizione, 12 marzo 2026',
     },
     urgency: 92,
-    inDiscussionThisWeek: true,
     keywords: [
       'codice della strada',
       'monopattini',
@@ -142,627 +86,384 @@ export const MOCK_ACTS: Act[] = [
       'neopatentati',
     ],
     ministry: 'MIT — Infrastrutture e Trasporti',
-    ragLead:
-      'Il disegno di legge interviene sul regime sanzionatorio e sulla disciplina dei veicoli di micromobilità, con effetti immediati su patente, assicurazione e controlli urbani.',
-    cittadino: [
+    preamble:
+      'La Camera dei deputati e il Senato della Repubblica hanno approvato; IL PRESIDENTE DELLA REPUBBLICA Promulga la seguente legge:',
+    articles: [
       {
-        text: 'Chi usa lo smartphone alla guida può subire il ritiro breve della patente da 7 a 15 giorni, anche in assenza di incidente.',
-        citationIds: [1],
+        number: '1',
+        heading: 'Finalità e oggetto',
+        original:
+          '1. La presente legge reca disposizioni volte a rafforzare la sicurezza della circolazione stradale, con particolare riguardo alla prevenzione degli incidenti connessi all’uso di dispositivi di comunicazione durante la guida e alla disciplina dei veicoli di micromobilità.\n2. Per le finalità di cui al comma 1 sono apportate modifiche al decreto legislativo 30 aprile 1992, n. 285, e successive modificazioni, di seguito denominato «codice della strada».',
+        structured:
+          'L’articolo definisce l’oggetto: sicurezza stradale, contrasto all’uso del telefono alla guida, disciplina della micromobilità. Le modifiche si innestano sul d.lgs. 285/1992 (Codice della strada).',
+        simple:
+          'Questa legge cambia il Codice della strada. Punti centrali: meno incidenti da smartphone alla guida e regole più chiare per monopattini e mezzi simili.',
       },
       {
-        text: 'Tutti i monopattini elettrici dovranno avere contrassegno identificativo (targa) e copertura assicurativa RC.',
-        citationIds: [2],
+        number: '2',
+        heading: 'Uso di apparecchi radiotelefonici e sanzione accessoria',
+        original:
+          '1. All’articolo 173 del codice della strada, dopo il comma 3-bis, è inserito il seguente:\n«3-ter. Qualora il conducente sia colto nell’uso di un apparecchio radiotelefonico, di cuffie o di altri dispositivi di comunicazione non consentiti e risulti in possesso di un punteggio della patente inferiore a venti punti, si applica la sanzione accessoria del ritiro della patente da sette a quindici giorni, secondo le modalità di cui all’articolo 216.»\n2. In caso di recidiva nel biennio, la durata del ritiro è raddoppiata.',
+        structured:
+          'Novella dell’art. 173 C.d.S.: se si usa il telefono (o cuffie/dispositivi vietati) e i punti patente sono sotto 20, scatta il ritiro breve da 7 a 15 giorni (art. 216). Recidiva nel biennio: durata raddoppiata.',
+        simple:
+          'Se usi il telefono alla guida e hai meno di 20 punti sulla patente, te la ritirano da 7 a 15 giorni. Se succede di nuovo entro due anni, i giorni raddoppiano.',
       },
       {
-        text: 'Per alcol e stupefacenti vale un regime di tolleranza zero: basta l’esito positivo del test rapido per le sanzioni accessorie.',
-        citationIds: [3],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Sanzioni e patente a punti',
-        body: 'L’intervento principale riguarda gli artt. 173 e 218 C.d.S. La sospensione breve è costruita come sanzione accessoria automatica quando il punteggio residuo è inferiore a 20. In Commissione è stato introdotto un meccanismo di recidiva a 24 mesi.',
-      },
-      {
-        title: 'Micromobilità',
-        body: 'L’art. 8 novella l’art. 75 C.d.S. e allinea i veicoli di mobilità personale al regime europeo di identificazione e RC. Restano da emanare i due decreti MIT su caratteristiche del contrassegno e anagrafe dei veicoli.',
+        number: '3',
+        heading: 'Veicoli di mobilità personale',
+        original:
+          '1. L’articolo 75 del codice della strada è sostituito dal seguente:\n«Art. 75 (Veicoli di mobilità personale). — 1. I veicoli di mobilità personale a propulsione prevalentemente elettrica, ivi compresi i monopattini, devono essere muniti di contrassegno identificativo e di copertura assicurativa per la responsabilità civile verso terzi.\n2. Con decreto del Ministro delle infrastrutture e dei trasporti, da adottare entro sessanta giorni dalla data di entrata in vigore della presente disposizione, di concerto con il Ministro dell’economia e delle finanze, sono definite le caratteristiche del contrassegno e le modalità di iscrizione in apposita anagrafe.»',
+        structured:
+          'Sostituzione dell’art. 75 C.d.S.: obbligo di contrassegno (targa) e RC per monopattini e analoghi. Due decreti MIT/MEF entro 60 giorni: caratteristiche del contrassegno e anagrafe dei veicoli. Senza i decreti l’obbligo resta inattuato sul piano operativo.',
+        simple:
+          'Monopattini elettrici: servono una targa (contrassegno) e l’assicurazione RC. I dettagli tecnici arriveranno con due decreti del Ministero delle Infrastrutture: finché non escono, nella pratica manca il “come si fa”.',
       },
       {
-        title: 'Dinamiche di Commissione',
-        body: '14 emendamenti approvati, di cui 6 di origine governativa. L’art. 24-bis sulle concessioni autostradali è stato innestato in sede referente senza audizione specifica sul punto.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 8 — modifiche all’art. 75 C.d.S.',
-        oldText:
-          'I veicoli di mobilità personale a propulsione prevalentemente elettrica sono esentati dall’obbligo di immatricolazione e di copertura assicurativa obbligatoria, salva diversa disposizione comunale.',
-        newText:
-          'Tutti i veicoli di mobilità personale a propulsione prevalentemente elettrica devono essere dotati di contrassegno identificativo e di copertura per la responsabilità civile verso terzi, secondo i criteri fissati con decreto del Ministro delle infrastrutture.',
+        number: '4',
+        heading: 'Neopatentati e limiti di velocità',
+        original:
+          '1. All’articolo 117 del codice della strada, il comma 2-bis è sostituito dal seguente:\n«2-bis. Per i primi tre anni dal conseguimento della patente di categoria B è vietato il superamento della velocità di 90 km/h sulle strade extraurbane principali e di 100 km/h sulle autostrade.»',
+        structured:
+          'Per i neopatentati B il vincolo passa a tre anni: 90 km/h extraurbane principali, 100 km/h in autostrada.',
+        simple:
+          'Se hai la patente B da meno di tre anni: massimo 90 km/h fuori città (strade principali) e 100 km/h in autostrada.',
       },
       {
-        article: 'Art. 4, comma 2 — sanzione accessoria',
-        oldText:
-          'L’uso di apparecchi radiotelefonici durante la marcia è punito con sanzione amministrativa pecuniaria, senza sospensione automatica della patente.',
-        newText:
-          'Dispone la sanzione accessoria del ritiro breve della patente da 7 a 15 giorni qualora il conducente risulti in possesso di punteggio inferiore a venti punti.',
-      },
-    ],
-    citations: [
-      {
-        id: 1,
-        source: 'Dossier Servizio Studi Camera n. 142, pag. 12 (Art. 4, comma 2)',
-        excerpt:
-          '«…dispone la sanzione accessoria del ritiro breve della patente da 7 a 15 giorni qualora il conducente risulti in possesso di punteggio inferiore a venti punti.»',
-      },
-      {
-        id: 2,
-        source: 'Testo DDL AC 1435, Art. 8 (modifiche art. 75 C.d.S.)',
-        excerpt:
-          '«…tutti i veicoli di mobilità personale a propulsione prevalentemente elettrica devono essere dotati di contrassegno identificativo e copertura per la responsabilità civile verso terzi.»',
-      },
-      {
-        id: 3,
-        source: 'Relazione tecnica MEF, allegato 3, pag. 4',
-        excerpt:
-          '«Le disposizioni in materia di alcol e sostanze stupefacenti non comportano nuovi o maggiori oneri a carico della finanza pubblica.»',
+        number: '5',
+        heading: 'Disposizioni transitorie in materia di concessioni',
+        original:
+          '1. In attesa del riordino della disciplina delle concessioni autostradali, i termini di scadenza delle concessioni in essere alla data di entrata in vigore della presente legge, relativi a tratte di interesse nazionale, sono prorogati di ventiquattro mesi.\n2. All’attuazione del presente articolo si provvede nell’ambito delle risorse umane, strumentali e finanziarie disponibili a legislazione vigente, senza nuovi o maggiori oneri per la finanza pubblica.',
+        structured:
+          'Comma estraneo all’oggetto dichiarato: proroga di 24 mesi delle concessioni autostradali nazionali. Il comma 2 ribadisce l’invarianza finanziaria. Segnalato in apparato critico come rischio omnibus.',
+        simple:
+          'Questo articolo non parla di patenti o monopattini: allunga di due anni alcune concessioni autostradali. È il pezzo “fuori tema” della legge.',
       },
     ],
-    votes: VOTES_CAMERA,
   },
   {
     id: 'dl-113-2026',
     code: 'DL 113/2026',
-    title: 'Misure urgenti in materia fiscale ed economica',
+    formalTitle: 'DECRETO-LEGGE 4 agosto 2026, n. 113',
+    officialTitle:
+      'Misure urgenti in materia fiscale, di ammortizzatori sociali e di sostegno alle imprese energivore.',
+    popularTitle: 'Decreto fiscale d’agosto',
     summary:
-      'Proroghe fiscali, rifinanziamento degli ammortizzatori sociali e sostegno alle imprese energivore in sede di conversione.',
+      'Proroghe IVA/IRAP, rifinanziamento CIG in deroga e credito d’imposta per le imprese energivore, in sede di conversione.',
     date: '2026-08-04',
+    publishedAt: '2026-08-04',
+    inForceAt: '2026-08-05',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
     iniziativa: 'governo',
     materia: 'fisco',
     copertura: 'a_debito',
     iterStatus: 'in_commissione',
-    iterSteps: steps(1),
     decreesMissing: 0,
     decreeDeadline: null,
     financialNote:
-      'Copertura a debito per 1,2 miliardi di euro nel 2026, tramite maggiore emissione di titoli di Stato (art. 17, comma 1).',
-    amendmentsApproved: 31,
-    closedDoorNote:
-      'In V Commissione (Bilancio) sono stati approvati 31 emendamenti; 9 riguardano materie non fiscali inserite in conversione.',
+      'Copertura a debito per 1,2 miliardi di euro nel 2026, tramite maggiore emissione di titoli di Stato (art. 4, comma 1).',
     omnibusRisk: {
-      article: 'Art. 9',
+      article: 'Art. 3',
       description:
         'Norma su commissari straordinari di enti locali, estranea alla materia fiscale dichiarata nel preambolo.',
     },
     lobbyCheck: null,
     urgency: 88,
-    inDiscussionThisWeek: true,
-    keywords: ['fisco', 'proroghe', 'ammortizzatori', 'energivore', 'decreto legge'],
+    keywords: ['fisco', 'proroghe', 'iva', 'irap', 'energivore', 'decreto legge', 'ammortizzatori'],
     ministry: 'MEF — Economia e Finanze',
-    ragLead:
-      'Il decreto-legge in conversione combina proroghe tributarie e nuovi oneri di bilancio, con copertura prevalentemente in disavanzo.',
-    cittadino: [
+    preamble:
+      'IL PRESIDENTE DELLA REPUBBLICA\nVisti gli articoli 77 e 87 della Costituzione;\nRitenuta la straordinaria necessità e urgenza di introdurre misure in materia fiscale e di sostegno al tessuto produttivo;\nSulla proposta del Presidente del Consiglio dei ministri e del Ministro dell’economia e delle finanze;\nEmana il seguente decreto-legge:',
+    articles: [
       {
-        text: 'Slittano al 16 dicembre 2026 alcuni versamenti IVA e IRAP per le partite IVA sotto soglia.',
-        citationIds: [1],
+        number: '1',
+        heading: 'Differimento di versamenti IVA e IRAP',
+        original:
+          '1. Per i soggetti passivi con volume d’affari non superiore a 170.000 euro, i versamenti dell’imposta sul valore aggiunto e dell’imposta regionale sulle attività produttive relativi al terzo trimestre dell’anno 2026 sono effettuati entro il 16 dicembre 2026, senza applicazione di interessi e sanzioni.\n2. Restano fermi gli obblighi dichiarativi previsti dalla legislazione vigente.',
+        structured:
+          'Slittamento al 16 dicembre 2026 dei versamenti IVA e IRAP del III trimestre 2026 per chi ha volume d’affari ≤ 170.000 euro. Nessun interesse né sanzione sul differimento. Le dichiarazioni restano alle scadenze ordinarie.',
+        simple:
+          'Se sei una piccola partita IVA (fino a 170.000 euro di volume d’affari), IVA e IRAP del terzo trimestre 2026 le paghi entro il 16 dicembre, senza extra. Le dichiarazioni però restano alle date di sempre.',
       },
       {
-        text: 'Viene rifinanziato per 420 milioni lo strumento di integrazione salariale in deroga.',
-        citationIds: [2],
+        number: '2',
+        heading: 'Integrazione salariale in deroga e credito d’imposta energivori',
+        original:
+          '1. L’autorizzazione di spesa di cui all’articolo 44, comma 6-bis, del decreto legislativo 14 settembre 2015, n. 148, è incrementata di 420 milioni di euro per l’anno 2026.\n2. Alle imprese a forte consumo di energia elettrica, come definite dal decreto del Ministro dello sviluppo economico 21 dicembre 2017, è riconosciuto, per il secondo trimestre 2026, un credito d’imposta parametrato al costo medio della componente energia, nei limiti e con le modalità stabiliti con decreto del Ministro dell’economia e delle finanze.',
+        structured:
+          'Comma 1: +420 milioni alla CIG in deroga (rinvio al d.lgs. 148/2015). Comma 2: credito d’imposta energivori sul II trimestre 2026, con decreto MEF sui criteri. Il credito non è autoapplicativo.',
+        simple:
+          'Arrivano 420 milioni in più per la cassa integrazione in deroga. Le imprese che consumano tanta energia possono avere un credito d’imposta sul caro-bollette del secondo trimestre 2026: i dettagli li scrive il MEF con un decreto.',
       },
       {
-        text: 'Le imprese energivore ottengono un credito d’imposta parametrato al costo dell’energia nel II trimestre 2026.',
-        citationIds: [1],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Architettura della copertura',
-        body: 'L’art. 17 indica maggiore indebitamento netto. La Ragioneria ha certificato l’assenza di clausole di salvaguardia automatiche oltre il 2026.',
-      },
-      {
-        title: 'Conversione e maxi-emendamento',
-        body: 'Il Governo ha preannunciato questione di fiducia sul testo della Commissione. Il tempo di dibattito d’aula stimato è inferiore alla mediana dei DL di conversione 2018-2025.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 3, comma 1 — proroghe versamenti',
-        oldText:
-          'I versamenti IVA periodici scadono il 16 del mese successivo, senza differenziazione per classe di volume d’affari.',
-        newText:
-          'Per i soggetti con volume d’affari non superiore a 170.000 euro, i versamenti IVA e IRAP relativi al terzo trimestre 2026 sono differiti al 16 dicembre 2026, senza applicazione di interessi.',
-      },
-    ],
-    citations: [
-      {
-        id: 1,
-        source: 'Testo DL 113/2026, Art. 3, comma 1',
-        excerpt:
-          '«Per i soggetti con volume d’affari non superiore a 170.000 euro i versamenti IVA e IRAP relativi al terzo trimestre 2026 sono differiti al 16 dicembre 2026.»',
+        number: '3',
+        heading: 'Commissioni straordinarie presso gli enti locali',
+        original:
+          '1. All’articolo 141 del testo unico delle leggi sull’ordinamento degli enti locali, di cui al decreto legislativo 18 agosto 2000, n. 267, dopo il comma 2 è inserito il seguente:\n«2-bis. Il prefetto può disporre, per motivate ragioni di continuità amministrativa, la proroga della commissione straordinaria fino a ulteriori sei mesi, sentita la Conferenza Stato-città ed autonomie locali.»',
+        structured:
+          'Novella al TUEL (d.lgs. 267/2000): possibile proroga di sei mesi delle commissioni straordinarie comunali. Materia ordinamentale locale, non fiscale: segnalata come omnibus.',
+        simple:
+          'Questo articolo non riguarda tasse o bonus: allunga fino a sei mesi i commissari straordinari nei comuni. È un pezzo “altro” dentro un decreto fiscale.',
       },
       {
-        id: 2,
-        source: 'Relazione tecnica MEF, tab. 2 — oneri 2026',
-        excerpt:
-          '«L’autorizzazione di spesa di cui all’articolo 5 è incrementata di 420 milioni di euro per l’anno 2026.»',
+        number: '4',
+        heading: 'Copertura finanziaria',
+        original:
+          '1. Agli oneri derivanti dagli articoli 1 e 2, valutati in 1.200 milioni di euro per l’anno 2026, si provvede mediante corrispondente incremento del ricorso al mercato finanziario, ai sensi dell’articolo 3 della legge 12 agosto 1977, n. 506.\n2. Il Ministro dell’economia e delle finanze è autorizzato ad apportare, con propri decreti, le occorrenti variazioni di bilancio.',
+        structured:
+          'Oneri 1,2 miliardi nel 2026 coperti con maggiore indebitamento (ricorso al mercato). Variazioni di bilancio con decreti MEF.',
+        simple:
+          'Il decreto costa 1,2 miliardi nel 2026. Non ci sono tagli altrove: si copre facendo più debito pubblico.',
       },
     ],
-    votes: VOTES_CAMERA.map((v) => ({
-      ...v,
-      favorevoli: Math.round(v.favorevoli * 0.9),
-      contrari: Math.round(v.contrari * 1.1),
-    })),
-  },
-  {
-    id: 'ac-1988',
-    code: 'DDL AC 1988',
-    title: 'Rimodulazione degli incentivi Superbonus e riqualificazione edilizia',
-    summary:
-      'Chiusura progressiva delle aliquote residue, tetti di spesa e trasferimento delle detrazioni non utilizzate.',
-    date: '2026-06-22',
-    iniziativa: 'parlamentare',
-    materia: 'fisco',
-    copertura: 'tagli_spesa',
-    iterStatus: 'navetta_senato',
-    iterSteps: steps(3),
-    decreesMissing: 1,
-    decreeDeadline: '2026-08-01',
-    financialNote:
-      'Tagli di spesa stimati in 3,4 miliardi nel triennio, tramite riduzione delle aliquote residue e tetto massimo di detrazione.',
-    amendmentsApproved: 22,
-    closedDoorNote:
-      'In sede referente la Commissione Finanze ha approvato 22 emendamenti, 4 dei quali in seduta notturna non trasmessa in streaming.',
-    omnibusRisk: null,
-    lobbyCheck: {
-      similarity: 0.91,
-      source: 'Position paper ANCE, audizione 4 maggio 2026',
-    },
-    urgency: 76,
-    inDiscussionThisWeek: true,
-    keywords: ['superbonus', 'detrazioni', 'edilizia', '110', 'riqualificazione'],
-    ministry: 'MEF — Economia e Finanze',
-    ragLead:
-      'Il testo chiude il ciclo Superbonus riducendo aliquote e imponendo tetti, con un decreto attuativo MEF ancora mancante sui criteri di trasferimento delle detrazioni.',
-    cittadino: [
-      {
-        text: 'Le aliquote residue scendono e viene introdotto un tetto massimo di detrazione per unità immobiliare.',
-        citationIds: [1],
-      },
-      {
-        text: 'Le detrazioni non utilizzate possono essere cedute solo a intermediari vigilati, non più a privati.',
-        citationIds: [2],
-      },
-      {
-        text: 'I cantieri già iniziati con CILAS restano salvaguardati alle condizioni previgenti fino al 31 dicembre 2026.',
-        citationIds: [1],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Salvaguardia dei cantieri aperti',
-        body: 'La disciplina transitoria copre i lavori con CILAS presentata entro il 31 marzo 2026. Restano escluse le varianti sostanziali successive a quella data.',
-      },
-      {
-        title: 'Impatto di bilancio',
-        body: 'Il taglio è contabilizzato come minore spesa fiscale. Bankitalia, in audizione, ha evidenziato il rischio di contenzioso sui cantieri ibridi.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 1, comma 2 — aliquote',
-        oldText:
-          'Per le spese sostenute dal 2024 l’aliquota della detrazione è pari al 70 per cento, ridotta al 65 per cento per l’anno 2025.',
-        newText:
-          'Per le spese sostenute dal 1° gennaio 2027 l’aliquota è pari al 50 per cento, nel limite complessivo di 96.000 euro per unità immobiliare.',
-      },
-    ],
-    citations: [
-      {
-        id: 1,
-        source: 'Dossier Servizio Bilancio Senato n. 88, pag. 6',
-        excerpt:
-          '«L’aliquota è ridotta al 50 per cento nel limite complessivo di 96.000 euro per unità immobiliare.»',
-      },
-      {
-        id: 2,
-        source: 'Testo approvato Camera, Art. 2, comma 4',
-        excerpt:
-          '«La cessione del credito corrispondente alla detrazione è consentita esclusivamente a favore di banche e intermediari finanziari iscritti all’albo.»',
-      },
-    ],
-    votes: VOTES_CAMERA,
   },
   {
     id: 'ac-2102',
     code: 'DDL AC 2102',
-    title: 'Riduzione dei tempi di attesa nel Servizio sanitario nazionale',
+    formalTitle: 'Disegno di legge A.C. 2102',
+    officialTitle:
+      'Disposizioni per la riduzione dei tempi di attesa delle prestazioni sanitarie e per la trasparenza delle agende di prenotazione.',
+    popularTitle: 'Liste d’attesa nel Servizio sanitario',
     summary:
-      'Obblighi di pubblicazione delle agende, tetti al ricorso al privato accreditato e sanzioni per le regioni inadempienti.',
+      'Agende CUP visibili in tempo reale, prestazione in struttura privata se i tempi massimi scattano, vincoli di fondo per le regioni inadempienti.',
     date: '2026-08-11',
+    publishedAt: null,
+    inForceAt: null,
+    sourceUrl: 'https://dati.camera.it/sparql',
+    sourceLabel: 'Testo all’esame della Camera — LOD SPARQL',
     iniziativa: 'governo',
     materia: 'sanita',
     copertura: 'a_debito',
     iterStatus: 'in_commissione',
-    iterSteps: steps(1),
     decreesMissing: 3,
     decreeDeadline: '2026-05-15',
     financialNote:
       'Stanziamento aggiuntivo di 780 milioni nel 2026, in disavanzo, vincolato al rispetto dei tetti di spesa per il privato accreditato.',
-    amendmentsApproved: 8,
-    closedDoorNote:
-      'Ufficio di presidenza della XII Commissione ha selezionato 8 emendamenti segnalati; il resto è stato dichiarato inammissibile per estraneità.',
     omnibusRisk: null,
     lobbyCheck: {
       similarity: 0.86,
       source: 'Memoria AIOP, audizione 21 luglio 2026',
     },
     urgency: 95,
-    inDiscussionThisWeek: true,
-    keywords: ['sanità', 'liste di attesa', 'ssn', 'prenotazioni', 'cup'],
+    keywords: ['sanità', 'liste di attesa', 'ssn', 'cup', 'prenotazioni'],
     ministry: 'Ministero della Salute',
-    ragLead:
-      'Il provvedimento impone trasparenza delle agende CUP e collega i fondi aggiuntivi a obiettivi di smaltimento delle liste d’attesa.',
-    cittadino: [
+    preamble:
+      'Onorevoli Deputati! — Il presente disegno di legge è volto a rendere effettivi i tempi massimi di attesa per le prestazioni di specialistica ambulatoriale e di diagnostica, mediante obblighi di pubblicazione delle agende e meccanismi di garanzia per l’assistito.',
+    articles: [
       {
-        text: 'Le agende di prenotazione di visite e esami devono essere visibili in tempo reale sul CUP regionale.',
-        citationIds: [1],
+        number: '1',
+        heading: 'Finalità',
+        original:
+          '1. La presente legge persegue la finalità di garantire l’erogazione delle prestazioni di assistenza specialistica ambulatoriale e di diagnostica strumentale nel rispetto dei tempi massimi di attesa definiti dalla normativa vigente e dagli accordi Stato-Regioni.\n2. All’attuazione della presente legge le regioni e le province autonome provvedono nell’esercizio delle proprie competenze in materia di tutela della salute.',
+        structured:
+          'Finalità: rispetto dei tempi massimi già previsti (non se ne inventano di nuovi). Competenza regionale sulla salute resta ferma: lo Stato pone obblighi di risultato e di trasparenza.',
+        simple:
+          'Lo scopo è far rispettare i tempi massimi già previsti per visite ed esami. Le regioni restano titolari della sanità; lo Stato impone regole di trasparenza e garanzie per il paziente.',
       },
       {
-        text: 'Se i tempi massimi sono superati, la prestazione può essere erogata in struttura privata con onere a carico del SSR.',
-        citationIds: [2],
+        number: '2',
+        heading: 'Trasparenza delle agende di prenotazione',
+        original:
+          '1. Le regioni assicurano la pubblicazione in tempo reale, sul sistema CUP, di tutte le agende di prima visita e di diagnostica, ivi comprese quelle delle strutture private accreditate.\n2. Con decreto del Ministro della salute, di concerto con il Ministro per la pubblica amministrazione, da adottare entro trenta giorni dalla data di entrata in vigore della presente legge, sono definiti i tracciati informatici e gli standard di interoperabilità.',
+        structured:
+          'Obbligo di visibilità in tempo reale delle agende CUP, incluso il privato accreditato. Decreto Salute/PA entro 30 giorni sui tracciati XML/interoperabilità: senza di esso il comma 1 è difficilmente azionabile in modo uniforme.',
+        simple:
+          'Sul CUP regionale devi poter vedere subito tutti gli slot liberi, anche delle cliniche convenzionate. Un decreto del Ministero della Salute deve ancora dire come collegare i sistemi informatici.',
       },
       {
-        text: 'Le regioni inadempienti per due trimestri consecutivi perdono una quota del fondo aggiuntivo.',
-        citationIds: [1],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Governance delle agende',
-        body: 'Si istituisce un’anagrafe nazionale delle prestazioni, interoperabile con i CUP. Mancano tre decreti: tracciati XML, sanzioni e riparto del fondo.',
-      },
-      {
-        title: 'Rapporto pubblico-privato',
-        body: 'Il tetto al ricorso al privato accreditato è modulato per branca. In audizione AIOP ha chiesto deroga per la diagnostica per immagini: similarità testuale 86% con l’emendamento 4.12 poi ritirato.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 2, comma 3 — agende CUP',
-        oldText:
-          'Le regioni organizzano i sistemi di prenotazione secondo i propri modelli organizzativi, senza obblighi di pubblicazione in tempo reale.',
-        newText:
-          'Le regioni assicurano la pubblicazione in tempo reale, sul sistema CUP, di tutte le agende di prima visita e diagnostica, ivi comprese quelle del privato accreditato.',
-      },
-    ],
-    citations: [
-      {
-        id: 1,
-        source: 'Testo DDL AC 2102, Art. 2, comma 3',
-        excerpt:
-          '«Le regioni assicurano la pubblicazione in tempo reale, sul sistema CUP, di tutte le agende di prima visita e diagnostica.»',
+        number: '3',
+        heading: 'Garanzia per l’assistito e vincoli di fondo',
+        original:
+          '1. Decorsi i tempi massimi di attesa senza che la prestazione sia stata erogata, l’assistito ha diritto di ottenere la medesima prestazione presso una struttura privata, con onere a carico del servizio sanitario regionale, secondo i tariffe massime fissate con decreto del Ministro della salute.\n2. Le regioni che, per due trimestri consecutivi, non rispettano gli obiettivi di smaltimento delle liste di attesa decadono, per la quota parte, dall’accesso al fondo di cui all’articolo 4.',
+        structured:
+          'Meccanismo di garanzia: superati i tempi, prestazione in privato a carico del SSR, con tetto tariffario da decreto. Sanzione finanziaria regionale dopo due trimestri di inadempimento sul fondo art. 4.',
+        simple:
+          'Se aspetti oltre il tempo massimo, puoi fare visita o esame in una struttura privata e paga il servizio sanitario regionale. Se una regione sbaglia per due trimestri di fila, perde una fetta dei soldi extra del fondo.',
       },
       {
-        id: 2,
-        source: 'Dossier ISS / Servizio Studi, pag. 9',
-        excerpt:
-          '«Superati i tempi massimi, la prestazione è erogata presso strutture private con onere a carico del servizio sanitario regionale.»',
+        number: '4',
+        heading: 'Fondo per lo smaltimento delle liste di attesa',
+        original:
+          '1. Nello stato di previsione del Ministero della salute è istituito un fondo, con una dotazione di 780 milioni di euro per l’anno 2026, destinato al concorso dello Stato agli oneri di cui all’articolo 3.\n2. Il riparto del fondo è stabilito con decreto del Ministro della salute, di concerto con il Ministro dell’economia e delle finanze, sentita la Conferenza permanente per i rapporti tra lo Stato, le regioni e le province autonome di Trento e di Bolzano.',
+        structured:
+          'Fondo 780 milioni/2026. Riparto con decreto Salute/MEF in Conferenza Stato-Regioni: terzo decreto attuativo del pacchetto, oltre a tracciati e tariffe.',
+        simple:
+          'Lo Stato mette 780 milioni nel 2026 per smaltire le liste. Come si dividono tra le regioni lo decide un altro decreto, d’accordo con il MEF e le regioni.',
       },
     ],
-    votes: VOTES_CAMERA,
-  },
-  {
-    id: 'l-18-2026',
-    code: 'L. 18/2026',
-    title: 'Modifiche al processo civile e all’ufficio per il processo',
-    summary:
-      'Legge già promulgata: digitalizzazione delle notifiche, termini di udienza e stabilizzazione parziale dell’ufficio per il processo.',
-    date: '2026-03-18',
-    iniziativa: 'governo',
-    materia: 'giustizia',
-    copertura: 'invarianza',
-    iterStatus: 'promulgata',
-    iterSteps: steps(4, true),
-    decreesMissing: 4,
-    decreeDeadline: '2026-04-30',
-    financialNote:
-      'Invarianza finanziaria dichiarata. I costi dell’ufficio per il processo sono coperti da residui del PNRR già autorizzati.',
-    amendmentsApproved: 19,
-    closedDoorNote:
-      'In Commissione Giustizia 19 emendamenti approvati in sede referente; 2 articoli aggiuntivi in serata, senza resoconto stenografico integrale.',
-    omnibusRisk: null,
-    lobbyCheck: null,
-    urgency: 40,
-    inDiscussionThisWeek: false,
-    keywords: ['giustizia', 'processo civile', 'notifiche', 'pnrr'],
-    ministry: 'Ministero della Giustizia',
-    ragLead:
-      'La legge è in vigore ma quattro decreti attuativi sul processo telematico risultano scaduti, con ritardo medio superiore a 100 giorni.',
-    cittadino: [
-      {
-        text: 'Le notifiche civili possono avvenire via PEC e domicilio digitale senza stampa cartacea, salvo eccezioni di legge.',
-        citationIds: [1],
-      },
-      {
-        text: 'I termini di udienza per le cause semplici sono compressi, con calendario vincolante per il giudice.',
-        citationIds: [2],
-      },
-      {
-        text: 'L’ufficio per il processo è parzialmente stabilizzato: i contratti PNRR non scadono tutti insieme a fine 2026.',
-        citationIds: [1],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Decreti mancanti',
-        body: 'Mancano i decreti su: specifiche tecniche del fascicolo, interoperabilità con le cancellerie, formazione obbligatoria, tabelle organiche. Senza di essi le norme su calendario udienza restano inattuate.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 3 — notifiche',
-        oldText:
-          'La notificazione si esegue a mezzo ufficiale giudiziario o servizio postale, secondo le forme degli articoli 137 e seguenti c.p.c.',
-        newText:
-          'La notificazione si esegue, di regola, mediante domicilio digitale risultante dai pubblici elenchi, con avviso di avvenuta consegna avente valore di ricevuta.',
-      },
-    ],
-    citations: [
-      {
-        id: 1,
-        source: 'L. 18/2026, Art. 3, comma 1, in G.U. n. 72',
-        excerpt:
-          '«La notificazione si esegue, di regola, mediante domicilio digitale risultante dai pubblici elenchi.»',
-      },
-      {
-        id: 2,
-        source: 'Relazione illustrativa, pag. 11',
-        excerpt:
-          '«Il giudice fissa il calendario delle udienze in modo da definire il giudizio entro i termini previsti dall’articolo 81-bis disp. att. c.p.c., come modificato.»',
-      },
-    ],
-    votes: VOTES_CAMERA,
   },
   {
     id: 'ac-1760',
     code: 'DDL AC 1760',
-    title: 'Disciplina dei contratti di lavoro a termine e della somministrazione',
+    formalTitle: 'Disegno di legge A.C. 1760',
+    officialTitle:
+      'Modifiche al decreto legislativo 15 giugno 2015, n. 81, in materia di contratto di lavoro a tempo determinato e di somministrazione.',
+    popularTitle: 'Causali dei contratti a termine',
     summary:
-      'Revisione delle causali, tetti percentuali in organico e inasprimento delle sanzioni per uso elusivo.',
+      'Causali oggettive oltre i 12 mesi, conversione in indeterminato se elusive, tetti alla somministrazione.',
     date: '2026-07-28',
+    publishedAt: null,
+    inForceAt: null,
+    sourceUrl: 'https://dati.camera.it/sparql',
+    sourceLabel: 'Testo all’esame della Camera — LOD SPARQL',
     iniziativa: 'parlamentare',
     materia: 'lavoro',
     copertura: 'tagli_spesa',
     iterStatus: 'in_aula',
-    iterSteps: steps(2),
     decreesMissing: 1,
     decreeDeadline: '2026-08-20',
     financialNote:
-      'Tagli di spesa da minore ricorso agli ammortizzatori connessi alla somministrazione irregolare; stima 180 milioni nel biennio.',
-    amendmentsApproved: 11,
-    closedDoorNote:
-      'Commissione Lavoro: 11 emendamenti approvati, 5 di origine sindacale riformulati dal relatore in seduta riservata.',
+      'Tagli di bilancio stimati in 180 milioni nel biennio, da minore ricorso agli ammortizzatori connessi alla somministrazione irregolare.',
     omnibusRisk: {
-      article: 'Art. 7',
-      description:
-        'Norma su voucher turismo inserita in Aula, con bassa coerenza tematica rispetto alle causali del tempo determinato.',
+      article: 'Art. 3',
+      description: 'Norma su voucher turismo inserita in Aula, a bassa coerenza tematica con le causali del tempo determinato.',
     },
     lobbyCheck: null,
     urgency: 70,
-    inDiscussionThisWeek: true,
     keywords: ['lavoro', 'contratti a termine', 'somministrazione', 'causali'],
     ministry: 'Ministero del Lavoro',
-    ragLead:
-      'Il testo restringe le causali del tempo determinato e inasprisce le sanzioni, con un decreto MLPS ancora atteso sui criteri di computo dell’organico.',
-    cittadino: [
+    preamble:
+      'Onorevoli Colleghi! — Il provvedimento interviene sull’articolo 19 del decreto legislativo n. 81 del 2015 al fine di circoscrivere l’uso del contratto a termine alle effettive esigenze temporanee.',
+    articles: [
       {
-        text: 'I contratti a termine oltre i 12 mesi richiedono causali oggettive più strette, indicate per iscritto.',
-        citationIds: [1],
+        number: '1',
+        heading: 'Contratto a tempo determinato',
+        original:
+          '1. All’articolo 19, comma 1, del decreto legislativo 15 giugno 2015, n. 81, le parole «ventiquattro mesi» sono sostituite dalle seguenti: «dodici mesi, ovvero ventiquattro mesi in presenza di esigenze temporanee e oggettive, estranee all’ordinaria attività, indicate in forma scritta a pena di conversione del rapporto in contratto a tempo indeterminato».',
+        structured:
+          'Soglia ordinaria a 12 mesi. Oltre, servono causali oggettive scritte, estranee all’attività ordinaria; altrimenti conversione in indeterminato. Rinvio al d.lgs. 81/2015, art. 19.',
+        simple:
+          'Il contratto a termine “semplice” arriva a 12 mesi. Per andare oltre serve scrivere una ragione vera e temporanea. Se la ragione è finta o manca, il contratto diventa a tempo indeterminato.',
       },
       {
-        text: 'Scatta la trasformazione a tempo indeterminato se le causali sono generiche o ripetute in modo elusivo.',
-        citationIds: [2],
+        number: '2',
+        heading: 'Somministrazione',
+        original:
+          '1. La somministrazione di lavoro a tempo determinato non può eccedere, presso ciascun utilizzatore, il 20 per cento dei lavoratori a tempo indeterminato in forza. Il Ministro del lavoro e delle politiche sociali, con decreto da adottare entro trenta giorni, definisce i criteri di computo dell’organico.',
+        structured:
+          'Cap del 20% di somministrati sull’organico indeterminato. Decreto MLPS sul computo: senza di esso il tetto è di difficile applicazione ispettiva.',
+        simple:
+          'In azienda i somministrati non possono superare il 20% di chi è assunto a tempo indeterminato. Un decreto del Lavoro deve spiegare come si conta l’organico.',
       },
       {
-        text: 'Le agenzie di somministrazione hanno un tetto percentuale sui lavoratori in missione presso lo stesso utilizzatore.',
-        citationIds: [1],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Causali e giurisprudenza',
-        body: 'Il testo recepisce orientamenti della Cassazione sulle causali “di comodo”. Resta da chiarire il rapporto con i contratti collettivi nazionali che già definiscono ipotesi specifiche.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 1 — d.lgs. 81/2015, art. 19',
-        oldText:
-          'Il contratto di lavoro a tempo determinato può essere stipulato per una durata non superiore a ventiquattro mesi, comprese le proroghe.',
-        newText:
-          'Il contratto di lavoro a tempo determinato superiore a dodici mesi è ammesso solo in presenza di esigenze temporanee e oggettive, estranee all’ordinaria attività, indicate in forma scritta a pena di conversione.',
-      },
-    ],
-    citations: [
-      {
-        id: 1,
-        source: 'Testo DDL AC 1760, Art. 1, comma 1',
-        excerpt:
-          '«Il contratto a tempo determinato superiore a dodici mesi è ammesso solo in presenza di esigenze temporanee e oggettive, estranee all’ordinaria attività.»',
-      },
-      {
-        id: 2,
-        source: 'Dossier INPS / Servizio Studi, pag. 5',
-        excerpt:
-          '«La violazione delle disposizioni sulle causali comporta la trasformazione del contratto in rapporto a tempo indeterminato dalla data di stipulazione.»',
+        number: '3',
+        heading: 'Prestazioni occasionali nel settore turistico',
+        original:
+          '1. In via sperimentale, per l’anno 2027, i datori di lavoro del settore turismo e pubblici esercizi possono ricorrere alle prestazioni di lavoro occasionale di cui all’articolo 54-bis del decreto-legge 24 aprile 2017, n. 50, convertito, con modificazioni, dalla legge 21 giugno 2017, n. 96, nel limite di 15.000 euro per prestatore.',
+        structured:
+          'Sperimentazione 2027: tetto voucher turismo a 15.000 euro/prestatore. Coerenza tematica bassa rispetto alle causali del tempo determinato.',
+        simple:
+          'Articolo extra: nel 2027 alberghi e ristoranti potrebbero usare di più i voucher (fino a 15.000 euro a persona). Non c’entra direttamente con le causali dei contratti a termine.',
       },
     ],
-    votes: VOTES_CAMERA,
+  },
+  {
+    id: 'l-18-2026',
+    code: 'L. 18/2026',
+    formalTitle: 'LEGGE 18 marzo 2026, n. 18',
+    officialTitle:
+      'Modifiche al codice di procedura civile in materia di notificazioni e di ufficio per il processo.',
+    popularTitle: 'Notifiche digitali e ufficio per il processo',
+    summary:
+      'Notifica via domicilio digitale come regola; parziale stabilizzazione dell’ufficio per il processo.',
+    date: '2026-03-18',
+    publishedAt: '2026-03-19',
+    inForceAt: '2026-04-03',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'giustizia',
+    copertura: 'invarianza',
+    iterStatus: 'promulgata',
+    decreesMissing: 4,
+    decreeDeadline: '2026-04-30',
+    financialNote:
+      'Invarianza finanziaria dichiarata. I costi dell’ufficio per il processo sono coperti da residui PNRR già autorizzati.',
+    omnibusRisk: null,
+    lobbyCheck: null,
+    urgency: 40,
+    keywords: ['giustizia', 'processo civile', 'notifiche', 'pnrr'],
+    ministry: 'Ministero della Giustizia',
+    preamble:
+      'La Camera dei deputati e il Senato della Repubblica hanno approvato; IL PRESIDENTE DELLA REPUBBLICA Promulga la seguente legge:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Notificazioni al domicilio digitale',
+        original:
+          '1. All’articolo 137 del codice di procedura civile, dopo il primo comma è inserito il seguente: «La notificazione si esegue, di regola, mediante invio al domicilio digitale risultante dai pubblici elenchi. L’avviso di avvenuta consegna ha valore di ricevuta.»',
+        structured:
+          'Regola generale: notifica PEC/domicilio digitale; l’accettazione del sistema vale ricevuta. Deroghe cartacee restano nei casi di legge non novellati qui.',
+        simple:
+          'Le notifiche civili, di regola, arrivano sulla PEC o sul domicilio digitale, non più per raccomandata. La ricevuta è quella del sistema.',
+      },
+      {
+        number: '2',
+        heading: 'Ufficio per il processo',
+        original:
+          '1. I contratti di lavoro flessibile conferiti nell’ambito dell’ufficio per il processo, in essere alla data di entrata in vigore della presente legge e finanziati con risorse del Piano nazionale di ripresa e resilienza, possono essere prorogati, nei limiti delle risorse disponibili, fino al 31 dicembre 2027.\n2. Con decreto del Ministro della giustizia sono definite le tabelle organiche e le modalità di formazione obbligatoria.',
+        structured:
+          'Proroga contrattuale UPP fino al 31/12/2027 a valere su residui PNRR. Due (o più) decreti su organici e formazione: oggi risultano mancanti, con ritardo sulla scadenza di aprile 2026.',
+        simple:
+          'Chi lavora nell’ufficio per il processo con contratti PNRR può restare fino a fine 2027, se i soldi bastano. Mancano ancora i decreti su organici e corsi obbligatori.',
+      },
+    ],
   },
   {
     id: 'ac-pop-44',
     code: 'DDL AC POP 44',
-    title: 'Iniziativa popolare per la trasparenza delle concessioni idriche',
+    formalTitle: 'Disegno di legge di iniziativa popolare A.C. POP 44',
+    officialTitle:
+      'Disposizioni per la trasparenza dei contratti di concessione del servizio idrico integrato e per il bilancio idrico comunale.',
+    popularTitle: 'Trasparenza delle concessioni idriche',
     summary:
-      'Pubblicazione dei contratti di concessione, tetti tariffari e obbligo di bilancio idrico comunale.',
+      'Pubblicazione integrale dei contratti di concessione, bilancio idrico annuale, tetti tariffari ancorati all’inflazione.',
     date: '2026-05-09',
+    publishedAt: null,
+    inForceAt: null,
+    sourceUrl: 'https://dati.camera.it/sparql',
+    sourceLabel: 'Testo presentato — LOD Camera',
     iniziativa: 'popolare',
     materia: 'lavoro',
     copertura: 'invarianza',
     iterStatus: 'in_commissione',
-    iterSteps: steps(1),
     decreesMissing: 0,
     decreeDeadline: null,
     financialNote:
       'Invarianza finanziaria: obblighi di pubblicazione e di bilancio idrico senza nuovi fondi statali.',
-    amendmentsApproved: 0,
-    closedDoorNote:
-      'Ancora in esame in Commissione Ambiente. Nessun emendamento votato; tre proposte di riformulazione del relatore non ancora calendarizzate.',
     omnibusRisk: null,
     lobbyCheck: {
       similarity: 0.87,
       source: 'Memoria Utilitalia, audizione 2 giugno 2026',
     },
     urgency: 55,
-    inDiscussionThisWeek: false,
     keywords: ['acqua', 'concessioni', 'tariffe', 'iniziativa popolare'],
     ministry: 'MASE — Ambiente e Sicurezza energetica',
-    ragLead:
-      'L’iniziativa popolare impone trasparenza sui contratti idrici. Utilitalia ha depositato una memoria con similarità testuale elevata rispetto a una bozza di riformulazione del relatore.',
-    cittadino: [
+    preamble:
+      'I sottoscritti cittadini esercitano l’iniziativa legislativa ai sensi dell’articolo 71, secondo comma, della Costituzione e presentano il seguente disegno di legge:',
+    articles: [
       {
-        text: 'I contratti di concessione del servizio idrico devono essere pubblicati integralmente, allegati compresi.',
-        citationIds: [1],
+        number: '1',
+        heading: 'Pubblicazione dei contratti di concessione',
+        original:
+          '1. Gli enti affidanti il servizio idrico integrato pubblicano il testo integrale dei contratti di concessione e dei relativi allegati tecnici e finanziari, in formato aperto e ricercabile, entro trenta giorni dalla sottoscrizione ovvero, per i rapporti in essere, entro novanta giorni dalla data di entrata in vigore della presente legge.',
+        structured:
+          'Obbligo di open data sul contratto intero (non un estratto FOIA). Termine: 30 giorni dalla firma; 90 giorni a regime per i contratti già in essere.',
+        simple:
+          'I contratti dell’acqua (e gli allegati) devono finire online, interi e cercabili. Per quelli già firmati c’è tempo 90 giorni dall’entrata in vigore.',
       },
       {
-        text: 'Ogni comune è tenuto a un bilancio idrico annuale, con perdite di rete e costi tariffari.',
-        citationIds: [2],
-      },
-      {
-        text: 'I tetti tariffari sono ancorati a indicatori di qualità e non possono crescere oltre l’inflazione senza delibera motivata.',
-        citationIds: [1],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Iter e quorum',
-        body: 'Le firme sono state convalidate. Il calendario in Commissione è slittato due volte. Il relatore ha circolato una riformulazione che attenua l’obbligo di pubblicazione degli allegati tecnici.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 2 — pubblicazione concessioni',
-        oldText:
-          'Gli enti affidanti pubblicano un estratto dei contratti di servizio, secondo le forme del d.lgs. 33/2013.',
-        newText:
-          'Gli enti affidanti pubblicano il testo integrale dei contratti di concessione e dei relativi allegati tecnici e finanziari, in formato aperto e ricercabile, entro trenta giorni dalla sottoscrizione.',
+        number: '2',
+        heading: 'Bilancio idrico e tetto tariffario',
+        original:
+          '1. Ciascun comune approva annualmente un bilancio idrico che dà conto delle perdite di rete, dei volumi fatturati e della composizione tariffaria.\n2. Gli incrementi tariffari eccedenti l’indice armonizzato dei prezzi al consumo sono ammessi solo con delibera motivata dell’ente di governo d’ambito.',
+        structured:
+          'Bilancio idrico annuale obbligatorio. Tariffe: aumenti sopra IPCA solo con delibera motivata dell’EGA.',
+        simple:
+          'Ogni comune deve dire ogni anno quante perdite ha la rete e come è fatta la bolletta. La tariffa non può salire più dell’inflazione senza una delibera che lo spieghi.',
       },
     ],
-    citations: [
-      {
-        id: 1,
-        source: 'Testo presentato, Art. 2, comma 1 (iniziativa popolare)',
-        excerpt:
-          '«Gli enti affidanti pubblicano il testo integrale dei contratti di concessione e dei relativi allegati tecnici e finanziari, in formato aperto e ricercabile.»',
-      },
-      {
-        id: 2,
-        source: 'Relazione dei proponenti, pag. 3',
-        excerpt:
-          '«Ciascun comune approva annualmente un bilancio idrico che dà conto delle perdite di rete, dei volumi fatturati e della composizione tariffaria.»',
-      },
-    ],
-    votes: VOTES_CAMERA.map((v) => ({
-      ...v,
-      favorevoli: Math.round((v.favorevoli + v.contrari) / 3),
-      contrari: Math.round((v.favorevoli + v.contrari) / 4),
-      astenuti: 8,
-    })),
   },
-  {
-    id: 'ac-1655',
-    code: 'DDL AC 1655',
-    title: 'Delega per la riforma delle sanzioni tributarie e del contraddittorio',
-    summary:
-      'Principi di delega su proporzionalità delle sanzioni, contraddittorio preventivo e digitalizzazione degli avvisi.',
-    date: '2026-04-02',
-    iniziativa: 'governo',
-    materia: 'fisco',
-    copertura: 'invarianza',
-    iterStatus: 'promulgata',
-    iterSteps: steps(4, true),
-    decreesMissing: 5,
-    decreeDeadline: '2026-02-28',
-    financialNote:
-      'Invarianza finanziaria: la delega non autorizza nuovi oneri; i decreti legislativi dovranno essere a costo zero.',
-    amendmentsApproved: 27,
-    closedDoorNote:
-      '27 principi aggiuntivi inseriti in Commissione Finanze, diversi dei quali in sedute notturne.',
-    omnibusRisk: {
-      article: 'Art. 4, lett. q)',
-      description:
-        'Principio di delega su giochi pubblici, distante dalla materia sanzionatoria tributaria dichiarata.',
-    },
-    lobbyCheck: null,
-    urgency: 60,
-    inDiscussionThisWeek: false,
-    keywords: ['fisco', 'sanzioni', 'delega', 'contraddittorio', 'avvisi'],
-    ministry: 'MEF — Economia e Finanze',
-    ragLead:
-      'La legge di delega è in vigore ma cinque decreti legislativi risultano oltre scadenza, lasciando inattuate proporzionalità e contraddittorio preventivo.',
-    cittadino: [
-      {
-        text: 'Le sanzioni tributarie dovranno essere proporzionate all’entità della violazione, con sconti per chi collabora.',
-        citationIds: [1],
-      },
-      {
-        text: 'Prima di un avviso di accertamento l’Agenzia dovrà, di regola, attivare un contraddittorio scritto.',
-        citationIds: [2],
-      },
-      {
-        text: 'Fino all’emanazione dei decreti, restano in vigore le sanzioni attuali: la riforma non è ancora operativa.',
-        citationIds: [1],
-      },
-    ],
-    approfondito: [
-      {
-        title: 'Stallo attuativo',
-        body: 'Cinque schemi di decreto sono all’esame del Consiglio di Stato. Il ritardo medio supera i 180 giorni rispetto alla scadenza di delega.',
-      },
-    ],
-    giurista: [
-      {
-        article: 'Art. 1, comma 1, lett. b) — principi di delega',
-        oldText:
-          'Le sanzioni amministrative tributarie sono applicate secondo le misure fisse previste dal d.lgs. 471/1997, senza obbligo generalizzato di contraddittorio preventivo.',
-        newText:
-          'I decreti legislativi assicurano la proporzionalità delle sanzioni e il contraddittorio preventivo, salvo i casi di fondato pericolo per la riscossione, da motivare analiticamente.',
-      },
-    ],
-    citations: [
-      {
-        id: 1,
-        source: 'L. 12/2026 (delega), Art. 1, comma 1, lett. b)',
-        excerpt:
-          '«I decreti legislativi assicurano la proporzionalità delle sanzioni e il contraddittorio preventivo, salvo i casi di fondato pericolo per la riscossione.»',
-      },
-      {
-        id: 2,
-        source: 'Parere Consiglio di Stato, sez. consultiva, n. 412/2026',
-        excerpt:
-          '«Lo schema non definisce con sufficiente determinatezza i casi di deroga al contraddittorio, con rischio di disapplicazione di fatto del principio.»',
-      },
-    ],
-    votes: VOTES_CAMERA,
-  },
-];
-
-export const TRENDING_TOPICS = [
-  { tag: '#CodiceDellaStrada', query: 'Cosa cambia con il nuovo codice della strada per monopattini e patente?' },
-  { tag: '#Superbonus', query: 'Come viene rimodulato il Superbonus e chi resta salvaguardato?' },
-  { tag: '#Sanità', query: 'Cosa prevede la riforma delle liste di attesa nel SSN?' },
-  { tag: '#Fisco', query: 'Quali proroghe fiscali contiene il decreto 113/2026?' },
 ];
 
 export const MINISTRY_DELAYS = [
@@ -789,8 +490,13 @@ export const OMNIBUS_RADAR = [
   { label: 'Sanità', score: 12 },
 ];
 
+const ID_ALIASES: Record<string, string> = {
+  'ddl-1435': 'legge-105-2026',
+};
+
 export function getActById(id: string): Act | undefined {
-  return MOCK_ACTS.find((act) => act.id === id);
+  const resolved = ID_ALIASES[id] ?? id;
+  return MOCK_ACTS.find((act) => act.id === resolved);
 }
 
 export function daysLate(deadline: string | null): number {
@@ -809,8 +515,6 @@ const SEARCH_STOPWORDS = new Set([
   'quale',
   'quando',
   'dove',
-  'perche',
-  'perché',
   'con',
   'per',
   'del',
@@ -823,45 +527,42 @@ const SEARCH_STOPWORDS = new Set([
   'uno',
   'nel',
   'nella',
-  'nelle',
-  'nei',
   'cambia',
-  'cambiano',
   'nuovo',
   'nuova',
-  'nuove',
   'prevede',
   'riforma',
   'misure',
-  'viene',
-  'vengono',
-  'tutti',
-  'tutte',
-  'anche',
-  'solo',
-  'sulla',
-  'sul',
-  'sugli',
+  'liste',
 ]);
 
 export function searchActs(query: string): Act[] {
   const q = query.toLowerCase().trim().replace(/#/g, '');
-  if (!q) return [];
+  if (!q) return MOCK_ACTS;
   const tokens = q
     .split(/[^a-zàèéìòù0-9]+/i)
     .map((t) => t.toLowerCase())
     .filter((t) => t.length > 3 && !SEARCH_STOPWORDS.has(t));
 
   const scored = MOCK_ACTS.map((act) => {
-    const hay = [act.title, act.summary, act.code, act.ragLead, ...act.keywords]
+    const hay = [
+      act.popularTitle,
+      act.officialTitle,
+      act.formalTitle,
+      act.summary,
+      act.code,
+      ...act.keywords,
+      ...act.articles.map((a) => a.heading),
+    ]
       .join(' ')
       .toLowerCase();
     let score = 0;
     for (const token of tokens) {
       if (act.keywords.some((k) => k.includes(token) || token.includes(k))) score += 8;
-      if (act.title.toLowerCase().includes(token)) score += 4;
+      if (act.popularTitle.toLowerCase().includes(token) || act.code.toLowerCase().includes(token)) score += 5;
       if (hay.includes(token)) score += 1;
     }
+    if (tokens.length === 0 && hay.includes(q)) score += 3;
     return { act, score };
   }).filter((row) => row.score > 0);
 

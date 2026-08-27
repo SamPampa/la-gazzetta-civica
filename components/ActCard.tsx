@@ -1,13 +1,7 @@
 import Link from 'next/link';
 import type { Act } from '@/src/data/mockActs';
 import { daysLate } from '@/src/data/mockActs';
-import {
-  COPERTURA_LABELS,
-  ITER_LABELS,
-  coperturaDotClass,
-  formatDateIT,
-  iterBadgeClass,
-} from '@/lib/labels';
+import { ITER_LABELS, formatDateIT, iterBadgeClass } from '@/lib/labels';
 
 type Props = {
   act: Act;
@@ -27,10 +21,10 @@ export function ActCard({ act }: Props) {
           {ITER_LABELS[act.iterStatus]}
         </span>
       </div>
-      <h3 className="font-serif text-lg font-semibold leading-snug text-slate-900 group-hover:text-blue-800">
-        {act.title}
+      <h3 className="text-lg font-semibold leading-snug text-slate-900 group-hover:text-blue-800">
+        {act.popularTitle}
       </h3>
-      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">{act.summary}</p>
+      <p className="mt-1 font-serif text-sm italic leading-snug text-slate-500">{act.officialTitle}</p>
       <p className="mt-3 font-mono text-[11px] text-slate-400">{formatDateIT(act.date)}</p>
       <div className="mt-4 flex flex-wrap gap-3 border-t border-slate-100 pt-3 text-[11px] text-slate-600">
         <span className="inline-flex items-center gap-1.5">
@@ -40,12 +34,8 @@ export function ActCard({ act }: Props) {
             }`}
           />
           {act.decreesMissing === 0
-            ? 'Nessun decreto mancante'
-            : `${act.decreesMissing} ${act.decreesMissing === 1 ? 'decreto mancante' : 'decreti mancanti'}`}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full ${coperturaDotClass(act.copertura)}`} />
-          {COPERTURA_LABELS[act.copertura]}
+            ? 'Nessun decreto attuativo mancante'
+            : `${act.decreesMissing} ${act.decreesMissing === 1 ? 'decreto attuativo mancante' : 'decreti attuativi mancanti'}`}
         </span>
       </div>
     </Link>

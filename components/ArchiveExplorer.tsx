@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { ActCard } from '@/components/ActCard';
 import {
   COPERTURA_LABELS,
@@ -8,13 +8,21 @@ import {
   ITER_LABELS,
   MATERIA_LABELS,
 } from '@/lib/labels';
-import { MOCK_ACTS, type Copertura, type Iniziativa, type IterStatus, type Materia } from '@/src/data/mockActs';
+import {
+  MOCK_ACTS,
+  searchActs,
+  type Copertura,
+  type Iniziativa,
+  type IterStatus,
+  type Materia,
+} from '@/src/data/mockActs';
 
 type SortKey = 'date' | 'urgency';
-
 const ALL = 'all';
 
 export function ArchiveExplorer() {
+  const [query, setQuery] = useState('');
+  const [submitted, setSubmitted] = useState('');
   const [iter, setIter] = useState<IterStatus | typeof ALL>(ALL);
   const [iniziativa, setIniziativa] = useState<Iniziativa | typeof ALL>(ALL);
   const [materia, setMateria] = useState<Materia | typeof ALL>(ALL);
@@ -22,7 +30,8 @@ export function ArchiveExplorer() {
   const [sort, setSort] = useState<SortKey>('urgency');
 
   const filtered = useMemo(() => {
-    const list = MOCK_ACTS.filter((act) => {
+    const base = submitted.trim() ? searchActs(submitted) : [...MOCK_ACTS];
+    const list = base.filter((act) => {
       if (iter !== ALL && act.iterStatus !== iter) return false;
       if (iniziativa !== ALL && act.iniziativa !== iniziativa) return false;
       if (materia !== ALL && act.materia !== materia) return false;
@@ -33,9 +42,16 @@ export function ArchiveExplorer() {
       if (sort === 'urgency') return b.urgency - a.urgency;
       return b.date.localeCompare(a.date);
     });
-  }, [iter, iniziativa, materia, copertura, sort]);
+  }, [submitted, iter, iniziativa, materia, copertura, sort]);
+
+  const onSearch = (e: FormEvent) => {
+    e.preventDefault();
+    setSubmitted(query.trim());
+  };
 
   const reset = () => {
+    setQuery('');
+    setSubmitted('');
     setIter(ALL);
     setIniziativa(ALL);
     setMateria(ALL);
@@ -44,9 +60,25 @@ export function ArchiveExplorer() {
 
   return (
     <div className="space-y-6">
+      <form onSubmit={onSearch} className="relative">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Cerca per parole chiave, materia o linguaggio naturale (es. monopattini, liste d’attesa, IVA)"
+          className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-4 pr-28 text-sm text-slate-900 outline-none ring-blue-600/15 placeholder:text-slate-400 focus:border-blue-400 focus:ring-4"
+        />
+        <button
+          type="submit"
+          className="absolute right-2 top-2 bottom-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          Cerca
+        </button>
+      </form>
+
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-slate-800">Filtri interattivi</h2>
+          <h2 className="text-sm font-semibold text-slate-800">Filtri</h2>
           <div className="flex items-center gap-2">
             <label className="text-xs text-slate-500">
               Ordina
@@ -88,7 +120,7 @@ export function ArchiveExplorer() {
             options={[{ value: ALL, label: 'Tutte' }, ...typedOptions(MATERIA_LABELS)]}
           />
           <FilterSelect
-            label="Copertura"
+            label="Copertura finanziaria"
             value={copertura}
             onChange={(v) => setCopertura(v as Copertura | typeof ALL)}
             options={[{ value: ALL, label: 'Tutte' }, ...typedOptions(COPERTURA_LABELS)]}
@@ -97,12 +129,13 @@ export function ArchiveExplorer() {
       </div>
 
       <p className="text-sm text-slate-500">
-        {filtered.length} {filtered.length === 1 ? 'atto' : 'atti'} in archivio
+        {filtered.length} {filtered.length === 1 ? 'norma' : 'norme'} in elenco
+        {submitted ? ` per «${submitted}»` : ''}
       </p>
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-          Nessun atto corrisponde ai filtri selezionati.
+          Nessun atto corrisponde a ricerca e filtri. Modifica i criteri o azzera.
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">

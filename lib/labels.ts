@@ -2,9 +2,9 @@ import type { Copertura, Iniziativa, IterStatus, Materia } from '@/src/data/mock
 
 export const ITER_LABELS: Record<IterStatus, string> = {
   in_commissione: 'In Commissione',
-  in_aula: 'In Aula',
+  in_aula: 'Esame in Aula',
   navetta_senato: 'Navetta Senato',
-  promulgata: 'Promulgata',
+  promulgata: 'Promulgata in Gazzetta Ufficiale',
 };
 
 export const INIZIATIVA_LABELS: Record<Iniziativa, string> = {
@@ -14,17 +14,17 @@ export const INIZIATIVA_LABELS: Record<Iniziativa, string> = {
 };
 
 export const MATERIA_LABELS: Record<Materia, string> = {
-  trasporti: 'Trasporti',
+  codice_strada: 'Codice della Strada',
   fisco: 'Fisco',
   sanita: 'Sanità',
-  giustizia: 'Giustizia',
   lavoro: 'Lavoro',
+  giustizia: 'Giustizia',
 };
 
 export const COPERTURA_LABELS: Record<Copertura, string> = {
-  invarianza: 'Invarianza a costo zero',
+  invarianza: 'Invarianza finanziaria a costo zero',
   a_debito: 'A debito',
-  tagli_spesa: 'Tagli di spesa',
+  tagli_spesa: 'Tagli di bilancio',
 };
 
 const MONTHS_IT = [

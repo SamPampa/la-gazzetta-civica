@@ -1,4 +1,4 @@
-import { ActDetailView } from '@/components/ActDetailView';
+import { LawReader } from '@/components/LawReader';
 import { MOCK_ACTS, getActById } from '@/src/data/mockActs';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -9,14 +9,14 @@ type Props = {
 };
 
 export function generateStaticParams() {
-  return MOCK_ACTS.map((act) => ({ id: act.id }));
+  return [...MOCK_ACTS.map((act) => ({ id: act.id })), { id: 'ddl-1435' }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const act = getActById(id);
-  if (!act) return { title: 'Atto non trovato' };
-  return { title: act.code, description: act.summary };
+  if (!act) return { title: 'Norma non trovata' };
+  return { title: act.formalTitle, description: act.officialTitle };
 }
 
 export default async function ActPage({ params }: Props) {
@@ -28,10 +28,10 @@ export default async function ActPage({ params }: Props) {
     <main>
       <p className="mb-6 text-sm">
         <Link href="/atti" className="text-slate-500 hover:text-slate-900">
-          ← Archivio atti
+          ← Archivio e filtri
         </Link>
       </p>
-      <ActDetailView act={act} />
+      <LawReader act={act} />
     </main>
   );
 }
