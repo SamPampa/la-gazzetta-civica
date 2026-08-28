@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "tsx scripts/seed_acts.ts"
+    "db:seed": "tsx scripts/seed_acts.ts",
+    "db:ingest": "tsx scripts/ingest_parliament.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
