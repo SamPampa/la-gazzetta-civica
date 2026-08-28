@@ -1491,15 +1491,15 @@ const SEARCH_STOPWORDS = new Set([
   'liste',
 ]);
 
-export function searchActs(query: string): Act[] {
+export function searchActs(query: string, acts: Act[] = MOCK_ACTS): Act[] {
   const q = query.toLowerCase().trim().replace(/#/g, '');
-  if (!q) return MOCK_ACTS;
+  if (!q) return acts;
   const tokens = q
     .split(/[^a-zàèéìòù0-9]+/i)
     .map((t) => t.toLowerCase())
     .filter((t) => t.length > 3 && !SEARCH_STOPWORDS.has(t));
 
-  const scored = MOCK_ACTS.map((act) => {
+  const scored = acts.map((act) => {
     const hay = [
       act.popularTitle,
       act.officialTitle,

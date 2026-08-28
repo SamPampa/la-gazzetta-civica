@@ -1,0 +1,96 @@
+// La Gazzetta Civica — persistent Supabase PostgreSQL schema.
+//
+// `url` uses Supabase's transaction-mode pooler (pgbouncer, port 6543) for
+// normal app queries; `directUrl` uses the session-mode pooler (port 5432),
+// which Prisma Migrate needs for schema changes since pgbouncer's
+// transaction mode doesn't support prepared statements / advisory locks.
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Act {
+  id              String         @id
+  code            String         @unique
+  formalTitle     String
+  officialTitle   String
+  popularTitle    String
+  summary         String
+  date            String
+  publishedAt     String?
+  inForceAt       String?
+  sourceUrl       String
+  sourceLabel     String
+  iniziativa      String // 'governo' | 'parlamentare' | 'popolare'
+  materia         String // 'fisco' | 'lavoro' | 'sanita' | 'giustizia' | 'codice_strada'
+  copertura       String // 'a_debito' | 'tagli_spesa' | 'invarianza'
+  iterStatus      String // 'in_commissione' | 'in_aula' | 'navetta_senato' | 'promulgata'
+  decreesMissing  Int            @default(0)
+  decreeDeadline  String?
+  financialNote   String
+  omnibusRisk     Json? // { article: string, description: string }
+  lobbyCheck      Json? // { similarity: number, source: string }
+  urgency         Int            @default(50)
+  ministry        String
+  preamble        String
+  createdAt       DateTime       @default(now())
+  articles        Article[]
+  votes           VoteBreakdown?
+
+  @@index([iterStatus])
+  @@index([iniziativa])
+  @@index([materia])
+  @@index([copertura])
+  @@index([date])
+}
+
+model Article {
+  id                 String       @id @default(cuid())
+  actId              String
+  number             String
+  heading            String
+  original           String       @db.Text
+  structured         String       @db.Text
+  simple             String       @db.Text
+  exhaustiveAnalysis String?      @db.Text
+  practicalImpact    String?      @db.Text
+  prosObjective      String[]     @default([])
+  consObjective      String[]     @default([])
+  orderIndex         Int          @default(0)
+  act                Act          @relation(fields: [actId], references: [id], onDelete: Cascade)
+  impacts            NormImpact[]
+
+  @@index([actId])
+}
+
+model NormImpact {
+  id                  String  @id @default(cuid())
+  articleId           String
+  modifiedActCode     String
+  targetArticle       String
+  impactType          String
+  previousRuleSummary String  @db.Text
+  newEffectSummary    String  @db.Text
+  officialSourceUrl   String?
+  article             Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+}
+
+model VoteBreakdown {
+  id         String @id @default(cuid())
+  actId      String @unique
+  favorevoli Int    @default(0)
+  contrari   Int    @default(0)
+  astenuti   Int    @default(0)
+  pctFav     Float  @default(0)
+  pctCont    Float  @default(0)
+  pctAst     Float  @default(0)
+  act        Act    @relation(fields: [actId], references: [id], onDelete: Cascade)
+}

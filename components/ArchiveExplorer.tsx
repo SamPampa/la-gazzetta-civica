@@ -13,6 +13,7 @@ import {
   currentYear,
   isRecentAct,
   searchActs,
+  type Act,
   type Copertura,
   type Iniziativa,
   type IterStatus,
@@ -26,7 +27,16 @@ const PAGE_SIZE = 6;
 
 const RECENT_WINDOW_LABEL = `Ultimi 5 anni (${currentYear() - 5} - ${currentYear()})`;
 
-export function ArchiveExplorer() {
+type Props = {
+  /** Acts fetched server-side via `getActs()` (Supabase, falling back to
+   * the bundled mock catalog) - all search/filter/sort/pagination below
+   * still runs client-side against this list, unchanged from before this
+   * was wired to the DB. Defaults to the mock catalog directly so the
+   * component still renders sensibly if ever used without the prop. */
+  initialActs?: Act[];
+};
+
+export function ArchiveExplorer({ initialActs = MOCK_ACTS }: Props) {
   const [query, setQuery] = useState('');
   const [submitted, setSubmitted] = useState('');
   const [timeRange, setTimeRange] = useState<TimeRange>('recent');
@@ -38,7 +48,7 @@ export function ArchiveExplorer() {
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
-    const base = submitted.trim() ? searchActs(submitted) : [...MOCK_ACTS];
+    const base = submitted.trim() ? searchActs(submitted, initialActs) : [...initialActs];
     const list = base.filter((act) => {
       if (timeRange === 'recent' && !isRecentAct(act)) return false;
       if (timeRange === 'historic' && isRecentAct(act)) return false;
@@ -52,7 +62,7 @@ export function ArchiveExplorer() {
       if (sort === 'urgency') return b.urgency - a.urgency;
       return b.date.localeCompare(a.date);
     });
-  }, [submitted, timeRange, iter, iniziativa, materia, copertura, sort]);
+  }, [submitted, timeRange, iter, iniziativa, materia, copertura, sort, initialActs]);
 
   useEffect(() => {
     setPage(1);
