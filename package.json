@@ -17,12 +17,14 @@
     "db:ingest:normattiva": "tsx scripts/ingest_normattiva.ts",
     "db:ingest:dagl": "tsx scripts/ingest_dagl.ts",
     "db:enrich:ai": "tsx scripts/enrich_acts_ai.ts",
+    "db:fetch:fulltexts": "tsx scripts/fetch_full_legislative_texts.ts",
     "db:ingest:all": "tsx scripts/ingest_parliament.ts && tsx scripts/ingest_senato.ts && tsx scripts/ingest_normattiva.ts && tsx scripts/ingest_dagl.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
     "@prisma/client": "^6.19.3",
     "next": "16.3.3",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
