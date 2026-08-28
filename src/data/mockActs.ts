@@ -7,6 +7,16 @@ export type IterStatus =
 export type Iniziativa = 'governo' | 'parlamentare' | 'popolare';
 export type Materia = 'codice_strada' | 'fisco' | 'sanita' | 'lavoro' | 'giustizia';
 export type Copertura = 'invarianza' | 'a_debito' | 'tagli_spesa';
+export type ImpactType = 'sostituzione' | 'abrogazione' | 'integrazione' | 'deroga';
+
+export type NormImpact = {
+  modifiedActCode: string;
+  targetArticle: string;
+  impactType: ImpactType;
+  previousRuleSummary: string;
+  newEffectSummary: string;
+  officialSourceUrl?: string;
+};
 
 export type LawArticle = {
   number: string;
@@ -14,6 +24,7 @@ export type LawArticle = {
   original: string;
   structured: string;
   simple: string;
+  impact?: NormImpact;
 };
 
 export type Act = {
@@ -108,6 +119,16 @@ export const MOCK_ACTS: Act[] = [
           'Novella dell’art. 173 C.d.S.: se si usa il telefono (o cuffie/dispositivi vietati) e i punti patente sono sotto 20, scatta il ritiro breve da 7 a 15 giorni (art. 216). Recidiva nel biennio: durata raddoppiata.',
         simple:
           'Se usi il telefono alla guida e hai meno di 20 punti sulla patente, te la ritirano da 7 a 15 giorni. Se succede di nuovo entro due anni, i giorni raddoppiano.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 285/1992 (Codice della Strada)',
+          targetArticle: 'Art. 173, dopo il comma 3-bis',
+          impactType: 'integrazione',
+          previousRuleSummary:
+            'L’uso del telefono alla guida era già vietato, con sanzione pecuniaria e decurtazione di punti, ma senza ritiro breve automatico legato al punteggio residuo.',
+          newEffectSummary:
+            'Si aggiunge il comma 3-ter: sotto i 20 punti patente scatta il ritiro da 7 a 15 giorni; in caso di recidiva nel biennio la durata è raddoppiata.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1992-04-30;285',
+        },
       },
       {
         number: '3',
@@ -118,6 +139,16 @@ export const MOCK_ACTS: Act[] = [
           'Sostituzione dell’art. 75 C.d.S.: obbligo di contrassegno (targa) e RC per monopattini e analoghi. Due decreti MIT/MEF entro 60 giorni: caratteristiche del contrassegno e anagrafe dei veicoli. Senza i decreti l’obbligo resta inattuato sul piano operativo.',
         simple:
           'Monopattini elettrici: servono una targa (contrassegno) e l’assicurazione RC. I dettagli tecnici arriveranno con due decreti del Ministero delle Infrastrutture: finché non escono, nella pratica manca il “come si fa”.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 285/1992 (Codice della Strada)',
+          targetArticle: 'Art. 75',
+          impactType: 'sostituzione',
+          previousRuleSummary:
+            'L’art. 75 disciplinava i veicoli in genere senza un regime specifico di identificazione e assicurazione per i mezzi di micromobilità elettrica.',
+          newEffectSummary:
+            'Il testo è integralmente sostituito: monopattini e analoghi devono avere contrassegno identificativo e RC; le modalità operative sono rinviate a decreto MIT/MEF entro 60 giorni.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1992-04-30;285',
+        },
       },
       {
         number: '4',
@@ -128,6 +159,16 @@ export const MOCK_ACTS: Act[] = [
           'Per i neopatentati B il vincolo passa a tre anni: 90 km/h extraurbane principali, 100 km/h in autostrada.',
         simple:
           'Se hai la patente B da meno di tre anni: massimo 90 km/h fuori città (strade principali) e 100 km/h in autostrada.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 285/1992 (Codice della Strada)',
+          targetArticle: 'Art. 117, comma 2-bis',
+          impactType: 'sostituzione',
+          previousRuleSummary:
+            'I limiti per neopatentati di categoria B valevano per un periodo più breve e con soglie di velocità diverse rispetto al testo novellato.',
+          newEffectSummary:
+            'Il comma 2-bis è sostituito: per i primi tre anni, massimo 90 km/h sulle extraurbane principali e 100 km/h in autostrada.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:1992-04-30;285',
+        },
       },
       {
         number: '5',
@@ -194,6 +235,16 @@ export const MOCK_ACTS: Act[] = [
           'Comma 1: +420 milioni alla CIG in deroga (rinvio al d.lgs. 148/2015). Comma 2: credito d’imposta energivori sul II trimestre 2026, con decreto MEF sui criteri. Il credito non è autoapplicativo.',
         simple:
           'Arrivano 420 milioni in più per la cassa integrazione in deroga. Le imprese che consumano tanta energia possono avere un credito d’imposta sul caro-bollette del secondo trimestre 2026: i dettagli li scrive il MEF con un decreto.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 148/2015',
+          targetArticle: 'Art. 44, comma 6-bis',
+          impactType: 'integrazione',
+          previousRuleSummary:
+            'L’autorizzazione di spesa per la CIG in deroga era fissata nella misura prevista dal d.lgs. 148/2015, senza l’incremento 2026.',
+          newEffectSummary:
+            'L’autorizzazione è incrementata di 420 milioni di euro per il 2026; il credito d’imposta energivori resta subordinato a decreto MEF.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2015-09-14;148',
+        },
       },
       {
         number: '3',
@@ -204,6 +255,16 @@ export const MOCK_ACTS: Act[] = [
           'Novella al TUEL (d.lgs. 267/2000): possibile proroga di sei mesi delle commissioni straordinarie comunali. Materia ordinamentale locale, non fiscale: segnalata come omnibus.',
         simple:
           'Questo articolo non riguarda tasse o bonus: allunga fino a sei mesi i commissari straordinari nei comuni. È un pezzo “altro” dentro un decreto fiscale.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 267/2000 (TUEL)',
+          targetArticle: 'Art. 141, dopo il comma 2',
+          impactType: 'integrazione',
+          previousRuleSummary:
+            'Le commissioni straordinarie presso gli enti locali avevano la durata prevista dal TUEL, senza una proroga prefettizia ulteriore di sei mesi.',
+          newEffectSummary:
+            'Si inserisce il comma 2-bis: il prefetto può prorogare la commissione straordinaria fino a ulteriori sei mesi, sentita la Conferenza Stato-città.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2000-08-18;267',
+        },
       },
       {
         number: '4',
@@ -334,6 +395,16 @@ export const MOCK_ACTS: Act[] = [
           'Soglia ordinaria a 12 mesi. Oltre, servono causali oggettive scritte, estranee all’attività ordinaria; altrimenti conversione in indeterminato. Rinvio al d.lgs. 81/2015, art. 19.',
         simple:
           'Il contratto a termine “semplice” arriva a 12 mesi. Per andare oltre serve scrivere una ragione vera e temporanea. Se la ragione è finta o manca, il contratto diventa a tempo indeterminato.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 81/2015',
+          targetArticle: 'Art. 19, comma 1',
+          impactType: 'sostituzione',
+          previousRuleSummary:
+            'Il contratto a termine poteva arrivare a ventiquattro mesi senza l’obbligo generale di causali oggettive scritte oltre i dodici mesi.',
+          newEffectSummary:
+            'Soglia ordinaria a 12 mesi; oltre servono esigenze temporanee e oggettive, estranee all’attività ordinaria, indicate per iscritto, a pena di conversione in indeterminato.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2015-06-15;81',
+        },
       },
       {
         number: '2',
@@ -344,6 +415,16 @@ export const MOCK_ACTS: Act[] = [
           'Cap del 20% di somministrati sull’organico indeterminato. Decreto MLPS sul computo: senza di esso il tetto è di difficile applicazione ispettiva.',
         simple:
           'In azienda i somministrati non possono superare il 20% di chi è assunto a tempo indeterminato. Un decreto del Lavoro deve spiegare come si conta l’organico.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 81/2015',
+          targetArticle: 'Art. 31',
+          impactType: 'sostituzione',
+          previousRuleSummary:
+            'Il tetto legale alla somministrazione a termine era del 30% dell’organico a tempo indeterminato, salvo diversa disposizione dei contratti collettivi.',
+          newEffectSummary:
+            'Il cap scende al 20% dei lavoratori a tempo indeterminato in forza; i criteri di computo sono rinviati a decreto del Ministro del lavoro entro 30 giorni.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2015-06-15;81',
+        },
       },
       {
         number: '3',
@@ -354,6 +435,16 @@ export const MOCK_ACTS: Act[] = [
           'Sperimentazione 2027: tetto voucher turismo a 15.000 euro/prestatore. Coerenza tematica bassa rispetto alle causali del tempo determinato.',
         simple:
           'Articolo extra: nel 2027 alberghi e ristoranti potrebbero usare di più i voucher (fino a 15.000 euro a persona). Non c’entra direttamente con le causali dei contratti a termine.',
+        impact: {
+          modifiedActCode: 'DL 50/2017',
+          targetArticle: 'Art. 54-bis',
+          impactType: 'deroga',
+          previousRuleSummary:
+            'Le prestazioni occasionali restano disciplinate dall’art. 54-bis del DL 50/2017, con i limiti ordinari per prestatore e datore.',
+          newEffectSummary:
+            'In via sperimentale per il 2027, turismo e pubblici esercizi possono ricorrere ai voucher nel limite di 15.000 euro per prestatore.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto-legge:2017-04-24;50',
+        },
       },
     ],
   },
@@ -396,6 +487,16 @@ export const MOCK_ACTS: Act[] = [
           'Regola generale: notifica PEC/domicilio digitale; l’accettazione del sistema vale ricevuta. Deroghe cartacee restano nei casi di legge non novellati qui.',
         simple:
           'Le notifiche civili, di regola, arrivano sulla PEC o sul domicilio digitale, non più per raccomandata. La ricevuta è quella del sistema.',
+        impact: {
+          modifiedActCode: 'Codice di procedura civile',
+          targetArticle: 'Art. 137, dopo il primo comma',
+          impactType: 'integrazione',
+          previousRuleSummary:
+            'La notificazione si eseguiva secondo le forme cartacee e telematiche già previste dal codice, senza una regola generale di domicilio digitale.',
+          newEffectSummary:
+            'La notifica si esegue di regola al domicilio digitale risultante dai pubblici elenchi; l’avviso di avvenuta consegna vale come ricevuta.',
+          officialSourceUrl: 'https://www.normattiva.it/',
+        },
       },
       {
         number: '2',
@@ -571,6 +672,16 @@ export const MOCK_ACTS: Act[] = [
           'Riduzione dell’aliquota Superbonus dal 110% al 90% per le spese sostenute dal 1° gennaio 2023, novellando l’art. 119 del DL 34/2020.',
         simple:
           'Dal 2023 il Superbonus non copre più il 110%, ma il 90% delle spese.',
+        impact: {
+          modifiedActCode: 'DL 34/2020',
+          targetArticle: 'Art. 119',
+          impactType: 'sostituzione',
+          previousRuleSummary:
+            'Per le spese ammesse l’aliquota di detrazione Superbonus era pari al 110%.',
+          newEffectSummary:
+            'Dal 1° gennaio 2023 l’aliquota è ridotta al 90% per le spese sostenute a quella data in poi.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto-legge:2020-05-19;34',
+        },
       },
       {
         number: '2',
@@ -581,6 +692,16 @@ export const MOCK_ACTS: Act[] = [
           'La cessione del credito è riservata a banche/intermediari/assicurazioni; vietata la cessione a privati, per contenere il rischio di frodi.',
         simple:
           'Il credito derivante dal Superbonus si può cedere solo a banche o assicurazioni, non più a privati.',
+        impact: {
+          modifiedActCode: 'DL 34/2020',
+          targetArticle: 'Art. 121',
+          impactType: 'deroga',
+          previousRuleSummary:
+            'La cessione del credito corrispondente alla detrazione era ammessa anche verso soggetti privati, con possibilità di cessioni successive.',
+          newEffectSummary:
+            'La cessione è consentita solo a banche, intermediari finanziari e imprese di assicurazione, con divieto di ulteriore cessione a privati.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto-legge:2020-05-19;34',
+        },
       },
       {
         number: '3',
@@ -591,6 +712,16 @@ export const MOCK_ACTS: Act[] = [
           'Clausola di salvaguardia: i cantieri con CILAS presentata entro il 31/12/2022 restano all’aliquota del 110%.',
         simple:
           'Se i lavori erano già iniziati con la pratica giusta (CILAS) prima del 2023, resta valido il vecchio 110%.',
+        impact: {
+          modifiedActCode: 'DL 34/2020',
+          targetArticle: 'Art. 119',
+          impactType: 'deroga',
+          previousRuleSummary:
+            'L’art. 1 della stessa legge riduce l’aliquota al 90% per tutte le spese dal 1° gennaio 2023.',
+          newEffectSummary:
+            'Chi aveva già presentato la CILAS entro il 31 dicembre 2022 resta sul regime del 110%.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto-legge:2020-05-19;34',
+        },
       },
     ],
   },
@@ -647,6 +778,16 @@ export const MOCK_ACTS: Act[] = [
           'Obbligo di patente a crediti INL per le imprese di cantiere dal 1° ottobre 2024, come requisito abilitante per operare.',
         simple:
           'Dall’autunno 2024 le imprese che lavorano nei cantieri devono avere una “patente a punti” rilasciata dall’Ispettorato del lavoro, altrimenti non possono operare.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 81/2008 (Testo unico sicurezza)',
+          targetArticle: 'Titolo IV — cantieri temporanei o mobili',
+          impactType: 'integrazione',
+          previousRuleSummary:
+            'L’accesso ai cantieri era disciplinato dagli obblighi di sicurezza del d.lgs. 81/2008, senza un requisito abilitante a punti rilasciato dall’INL.',
+          newEffectSummary:
+            'Dal 1° ottobre 2024 le imprese di cantiere devono possedere la patente a crediti dell’Ispettorato nazionale del lavoro, pena l’impossibilità di eseguire i lavori.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2008-04-09;81',
+        },
       },
       {
         number: '3',
@@ -699,6 +840,16 @@ export const MOCK_ACTS: Act[] = [
           'Novella dell’art. 635-quater c.p.: aggravante speciale (aumento da 1/3 alla metà) per danneggiamento di sistemi informatici di infrastrutture critiche o di pubblica utilità.',
         simple:
           'Chi attacca informaticamente ospedali, reti energetiche o altri servizi essenziali rischia una pena più alta.',
+        impact: {
+          modifiedActCode: 'Codice penale',
+          targetArticle: 'Art. 635-quater',
+          impactType: 'integrazione',
+          previousRuleSummary:
+            'Il danneggiamento di sistemi informatici era già sanzionato, senza un’aggravante specifica per infrastrutture critiche o di pubblica utilità.',
+          newEffectSummary:
+            'La pena è aumentata da un terzo alla metà se il fatto è commesso in danno di sistemi di pubblica utilità o di infrastrutture critiche nazionali.',
+          officialSourceUrl: 'https://www.normattiva.it/',
+        },
       },
       {
         number: '2',
@@ -945,6 +1096,16 @@ export const MOCK_ACTS: Act[] = [
           'Testo originario (2015) del regime del tempo determinato: durata massima 36 mesi, fino a 5 proroghe, senza obbligo generale di causale (regime poi ristretto da riforme successive).',
         simple:
           'Nella versione del 2015, un contratto a termine poteva durare fino a 3 anni e essere rinnovato fino a 5 volte, senza dover sempre spiegare il perché.',
+        impact: {
+          modifiedActCode: 'D.Lgs. 368/2001',
+          targetArticle: 'Disciplina organica del contratto a termine',
+          impactType: 'abrogazione',
+          previousRuleSummary:
+            'Il contratto a tempo determinato era regolato dal d.lgs. 368/2001, con causali e limiti propri di quel testo unico.',
+          newEffectSummary:
+            'Il d.lgs. 81/2015 sostituisce quel regime: durata massima 36 mesi e fino a cinque proroghe, senza obbligo generale di causale nel testo originario del 2015.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2001-09-06;368',
+        },
       },
       {
         number: '31',
@@ -965,6 +1126,16 @@ export const MOCK_ACTS: Act[] = [
           'Ampliamento del potere datoriale di modifica delle mansioni (ius variandi), estendibile anche a un livello di inquadramento inferiore, nella stessa categoria legale.',
         simple:
           'Il capo può, in certi casi, cambiarti mansione anche verso un livello un po’ più basso, se resta nella stessa categoria di inquadramento.',
+        impact: {
+          modifiedActCode: 'L. 300/1970 (Statuto dei Lavoratori)',
+          targetArticle: 'Art. 13',
+          impactType: 'sostituzione',
+          previousRuleSummary:
+            'Lo Statuto vincolava il lavoratore alle mansioni per le quali era stato assunto, con ius variandi più ristretto.',
+          newEffectSummary:
+            'Il datore può assegnare mansioni dello stesso livello e, in certi casi, del livello inferiore nella medesima categoria legale.',
+          officialSourceUrl: 'https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1970-05-20;300',
+        },
       },
     ],
   },
@@ -1157,6 +1328,35 @@ export function generateFallbackAct(rawIdOrQuery: string): Act {
   const heading2 = 'Disposizioni attuative';
   const heading3 = 'Copertura e disposizioni finali';
 
+  const foundationByMateria: Record<Materia, { code: string; article: string; previous: string }> = {
+    codice_strada: {
+      code: 'D.Lgs. 285/1992 (Codice della Strada)',
+      article: 'Disposizioni generali',
+      previous: 'La circolazione stradale resta disciplinata dal codice del 1992, salvo quanto qui novellato.',
+    },
+    fisco: {
+      code: 'D.P.R. 917/1986 (TUIR)',
+      article: 'Disposizioni tributarie di settore',
+      previous: 'Restano fermi gli obblighi dichiarativi e di versamento previsti dal TUIR e dalla legislazione fiscale vigente.',
+    },
+    sanita: {
+      code: 'L. 833/1978 (Istituzione del SSN)',
+      article: 'Livelli essenziali di assistenza',
+      previous: 'L’organizzazione sanitaria resta regionale, nei limiti dei LEA e della legislazione vigente.',
+    },
+    lavoro: {
+      code: 'D.Lgs. 81/2015',
+      article: 'Disciplina dei contratti di lavoro',
+      previous: 'I contratti di lavoro restano regolati dal d.lgs. 81/2015, salvo le modalità attuative qui demandate a decreto.',
+    },
+    giustizia: {
+      code: 'Codice di procedura civile',
+      article: 'Disposizioni processuali applicabili',
+      previous: 'Restano applicabili le forme processuali previgenti, in quanto compatibili.',
+    },
+  };
+  const foundation = foundationByMateria[materia];
+
   const articles: LawArticle[] = [
     {
       number: '1',
@@ -1171,6 +1371,15 @@ export function generateFallbackAct(rawIdOrQuery: string): Act {
       original: `1. Con decreto del Ministro competente, da adottare entro sessanta giorni dalla data di entrata in vigore del presente provvedimento, sono stabilite le modalità tecniche di attuazione delle disposizioni di cui all’articolo 1.\n2. Fino all’adozione del decreto di cui al comma 1, restano applicabili le disposizioni previgenti in quanto compatibili.`,
       structured: `Rinvio a un decreto attuativo entro 60 giorni per le modalità tecniche. Clausola di ultrattività della disciplina previgente fino all’emanazione del decreto.`,
       simple: `I dettagli pratici arrivano con un decreto entro due mesi. Finché non esce, valgono ancora le regole di prima (se compatibili).`,
+      impact: {
+        modifiedActCode: foundation.code,
+        targetArticle: foundation.article,
+        impactType: 'integrazione',
+        previousRuleSummary: foundation.previous,
+        newEffectSummary:
+          'Le modalità tecniche sono demandate a un decreto da adottare entro 60 giorni; fino ad allora restano applicabili le disposizioni previgenti in quanto compatibili.',
+        officialSourceUrl: 'https://www.normattiva.it/',
+      },
     },
     {
       number: '3',
@@ -1223,6 +1432,26 @@ export function getActById(id: string): Act {
   const resolved = ID_ALIASES[id] ?? id;
   const found = MOCK_ACTS.find((act) => act.id === resolved);
   return found ?? generateFallbackAct(id);
+}
+
+export function collectNormImpacts(act: Act): { articleNumber: string; impact: NormImpact }[] {
+  return act.articles.flatMap((article) =>
+    article.impact ? [{ articleNumber: article.number, impact: article.impact }] : [],
+  );
+}
+
+export function actIdFromNormCode(code: string): string | null {
+  const s = code.toLowerCase().replace(/\s+/g, ' ');
+  let m: RegExpMatchArray | null;
+  if ((m = s.match(/d\.?\s*lgs\.?\s*(\d+)\s*\/\s*(\d{4})/))) return `dlgs-${m[1]}-${m[2]}`;
+  if ((m = s.match(/\bdl\s+(\d+)\s*\/\s*(\d{4})/))) return `dl-${m[1]}-${m[2]}`;
+  if ((m = s.match(/(?:decreto-legge|d\.?\s*l\.)\s*(\d+)\s*\/\s*(\d{4})/))) return `dl-${m[1]}-${m[2]}`;
+  if ((m = s.match(/(?:legge|l\.)\s*(\d+)\s*\/\s*(\d{4})/))) {
+    const lId = `l-${m[1]}-${m[2]}`;
+    if (MOCK_ACTS.some((act) => act.id === lId)) return lId;
+    return `legge-${m[1]}-${m[2]}`;
+  }
+  return null;
 }
 
 export function daysLate(deadline: string | null): number {

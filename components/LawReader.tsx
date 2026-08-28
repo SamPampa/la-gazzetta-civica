@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { Act, LawArticle } from '@/src/data/mockActs';
-import { daysLate } from '@/src/data/mockActs';
-import { COPERTURA_LABELS, formatDateIT } from '@/lib/labels';
+import Link from 'next/link';
+import type { Act, LawArticle, NormImpact } from '@/src/data/mockActs';
+import { actIdFromNormCode, collectNormImpacts, daysLate } from '@/src/data/mockActs';
+import { COPERTURA_LABELS, IMPACT_TYPE_LABELS, formatDateIT, impactTypeClass } from '@/lib/labels';
 
 type Level = 'cittadino' | 'approfondito' | 'giurista';
 
@@ -95,6 +96,8 @@ export function LawReader({ act }: Props) {
         ))}
       </div>
 
+      <NormImpactSection act={act} />
+
       <VoteMap />
 
       <section className="mt-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
@@ -182,6 +185,8 @@ function ArticleBlock({
         </p>
       </div>
 
+      {article.impact && <ArticleImpactCallout impact={article.impact} />}
+
       {decode && <ExplanationBox article={article} level={level} />}
     </section>
   );
@@ -232,6 +237,89 @@ function ExplanationBox({ article, level }: { article: LawArticle; level: Level 
         </li>
       </ul>
     </div>
+  );
+}
+
+function ArticleImpactCallout({ impact }: { impact: NormImpact }) {
+  return (
+    <p className="mt-2 text-xs leading-relaxed text-slate-600">
+      <span className={`mr-2 inline-flex rounded-full border px-2 py-0.5 font-semibold ${impactTypeClass(impact.impactType)}`}>
+        {IMPACT_TYPE_LABELS[impact.impactType]}
+      </span>
+      Interviene su {impact.modifiedActCode}, {impact.targetArticle}.
+    </p>
+  );
+}
+
+function NormImpactSection({ act }: { act: Act }) {
+  const rows = collectNormImpacts(act);
+
+  return (
+    <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-semibold text-slate-900">Impatto sul quadro normativo &amp; modifiche correlate</h2>
+      <p className="mt-1 text-sm leading-relaxed text-slate-500">
+        Elenco verificabile delle novelle: quali atti preesistenti vengono sostituiti, integrati, derogati o abrogati.
+        I riassunti non sostituiscono il testo ufficiale.
+      </p>
+
+      {rows.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+          Nessuna novella puntuale catalogata su articoli di atti preesistenti. Il provvedimento introduce disciplina
+          autonoma o non modifica commi già in vigore nel corpus indicizzato.
+        </p>
+      ) : (
+        <ol className="mt-5 space-y-4">
+          {rows.map(({ articleNumber, impact }) => (
+            <li
+              key={`${articleNumber}-${impact.modifiedActCode}-${impact.targetArticle}`}
+              className="rounded-xl border border-slate-200 bg-slate-50/80 p-4"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${impactTypeClass(impact.impactType)}`}>
+                  {IMPACT_TYPE_LABELS[impact.impactType]}
+                </span>
+                <span className="font-mono text-[11px] text-slate-500">Art. {articleNumber} di questo atto</span>
+              </div>
+              <p className="mt-2 text-sm font-semibold text-slate-900">
+                <ModifiedActLink code={impact.modifiedActCode} />
+                <span className="mx-1.5 font-normal text-slate-400">·</span>
+                <span className="font-mono text-xs font-medium text-slate-700">{impact.targetArticle}</span>
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Regola previgente</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-700">{impact.previousRuleSummary}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Effetto nuovo</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-700">{impact.newEffectSummary}</p>
+                </div>
+              </div>
+              {impact.officialSourceUrl && (
+                <a
+                  href={impact.officialSourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex text-xs font-medium text-blue-700 hover:underline"
+                >
+                  Fonte ufficiale (Normattiva) ↗
+                </a>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function ModifiedActLink({ code }: { code: string }) {
+  const id = actIdFromNormCode(code);
+  if (!id) return <span>{code}</span>;
+  return (
+    <Link href={`/atti/${id}`} className="text-blue-800 hover:underline">
+      {code}
+    </Link>
   );
 }
 

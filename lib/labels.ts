@@ -1,4 +1,4 @@
-import type { Copertura, Iniziativa, IterStatus, Materia } from '@/src/data/mockActs';
+import type { Copertura, ImpactType, Iniziativa, IterStatus, Materia } from '@/src/data/mockActs';
 
 export const ITER_LABELS: Record<IterStatus, string> = {
   in_commissione: 'In Commissione',
@@ -26,6 +26,26 @@ export const COPERTURA_LABELS: Record<Copertura, string> = {
   a_debito: 'A debito',
   tagli_spesa: 'Tagli di bilancio',
 };
+
+export const IMPACT_TYPE_LABELS: Record<ImpactType, string> = {
+  sostituzione: 'Sostituzione',
+  abrogazione: 'Abrogazione',
+  integrazione: 'Integrazione',
+  deroga: 'Deroga',
+};
+
+export function impactTypeClass(type: ImpactType): string {
+  switch (type) {
+    case 'sostituzione':
+      return 'border-amber-200 bg-amber-50 text-amber-900';
+    case 'abrogazione':
+      return 'border-rose-200 bg-rose-50 text-rose-900';
+    case 'integrazione':
+      return 'border-blue-200 bg-blue-50 text-blue-900';
+    case 'deroga':
+      return 'border-violet-200 bg-violet-50 text-violet-900';
+  }
+}
 
 const MONTHS_IT = [
   'gennaio',
