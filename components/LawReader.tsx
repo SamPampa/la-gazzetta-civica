@@ -5,103 +5,86 @@ import type { Act, LawArticle } from '@/src/data/mockActs';
 import { daysLate } from '@/src/data/mockActs';
 import { COPERTURA_LABELS, formatDateIT } from '@/lib/labels';
 
-type Intensity = 1 | 2;
+type Tab = 'cittadino' | 'approfondito' | 'giurista';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'cittadino', label: '🟢 Cittadino (Sintetico)' },
+  { id: 'approfondito', label: '🟡 Approfondito (Focus)' },
+  { id: 'giurista', label: '🔴 Giurista / Tecnico' },
+];
 
 type Props = {
   act: Act;
 };
 
 export function LawReader({ act }: Props) {
-  const [decode, setDecode] = useState(false);
-  const [intensity, setIntensity] = useState<Intensity>(1);
+  const [tab, setTab] = useState<Tab>('cittadino');
   const late = daysLate(act.decreeDeadline);
 
   return (
-    <article className="mx-auto max-w-3xl">
-      <header className="mb-6 space-y-3">
+    <article className="mx-auto max-w-5xl">
+      <header className="mx-auto mb-6 max-w-3xl space-y-3">
         <p className="font-mono text-xs uppercase tracking-[0.16em] text-slate-500">{act.code}</p>
-        <h1 className="font-serif text-3xl font-bold leading-tight text-slate-900">{act.formalTitle}</h1>
-        <p className="font-serif text-base italic leading-relaxed text-slate-600">{act.officialTitle}</p>
+        <h1 className="text-3xl font-semibold leading-tight text-slate-900">{act.formalTitle}</h1>
+        <p className="text-base leading-relaxed text-slate-500">{act.officialTitle}</p>
         <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
           <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pubblicazione</dt>
-            <dd>{act.publishedAt ? formatDateIT(act.publishedAt) : 'Non ancora pubblicata in G.U.'}</dd>
+            <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pubblicazione</dt>
+            <dd className="text-slate-900">{act.publishedAt ? formatDateIT(act.publishedAt) : 'Non ancora pubblicata in G.U.'}</dd>
           </div>
           <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Entrata in vigore</dt>
-            <dd>{act.inForceAt ? formatDateIT(act.inForceAt) : 'Condizionata all’approvazione e alla G.U.'}</dd>
+            <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Entrata in vigore</dt>
+            <dd className="text-slate-900">
+              {act.inForceAt ? formatDateIT(act.inForceAt) : 'Condizionata all’approvazione e alla G.U.'}
+            </dd>
           </div>
         </dl>
         <a
           href={act.sourceUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex text-sm font-medium text-blue-800 underline decoration-blue-200 underline-offset-4 hover:decoration-blue-500"
+          className="inline-flex text-sm font-medium text-blue-700 hover:underline"
         >
           {act.sourceLabel} ↗
         </a>
       </header>
 
-      <div className="sticky top-[4.25rem] z-40 -mx-4 mb-8 border-y border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md sm:-mx-0 sm:rounded-2xl sm:border sm:px-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-800">
-            <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
-              <input
-                type="checkbox"
-                className="peer sr-only"
-                checked={decode}
-                onChange={(e) => setDecode(e.target.checked)}
-              />
-              <span className="pointer-events-none absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-600 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500" />
-              <span className="pointer-events-none absolute left-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
-            </span>
-            Decodifica &amp; Semplifica Testo
-          </label>
-
-          <div className={`flex flex-1 flex-col gap-2 sm:max-w-sm ${decode ? '' : 'pointer-events-none opacity-40'}`}>
-            <div className="flex items-center justify-between text-[11px] font-medium">
-              <span className={intensity === 1 ? 'text-amber-700' : 'text-slate-400'}>🟡 Strutturato / Approfondito</span>
-              <span className={intensity === 2 ? 'text-emerald-700' : 'text-slate-400'}>🟢 Semplice / Cittadino</span>
-            </div>
-            <input
-              type="range"
-              min={1}
-              max={2}
-              step={1}
-              disabled={!decode}
-              value={intensity}
-              onChange={(e) => setIntensity(Number(e.target.value) as Intensity)}
-              className="w-full accent-slate-900"
-              aria-label="Intensità della semplificazione"
-            />
-          </div>
+      <div className="sticky top-[4.25rem] z-40 mb-8 rounded-2xl border border-slate-200 bg-slate-100 p-1 shadow-sm">
+        <div className="grid grid-cols-3 gap-1">
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              className={`rounded-xl px-2 py-2.5 text-center text-[11px] font-medium transition sm:text-sm ${
+                tab === item.id
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'bg-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-        {!decode && (
-          <p className="mt-2 text-[11px] text-slate-500">
-            Vista predefinita: testo autentico. La decodifica è opzionale e non sostituisce la fonte.
-          </p>
-        )}
       </div>
-
-      {act.preamble && !decode && (
-        <p className="mb-8 whitespace-pre-line font-serif text-sm leading-relaxed text-slate-700">{act.preamble}</p>
-      )}
 
       <div className="space-y-8">
         {act.articles.map((article) => (
-          <ArticleBlock key={article.number} article={article} decode={decode} intensity={intensity} />
+          <ArticleBlock key={article.number} article={article} tab={tab} />
         ))}
       </div>
 
-      <section className="mt-12 space-y-4 border-t border-slate-200 pt-8">
-        <h2 className="font-serif text-xl font-semibold text-slate-900">Apparato critico e vincoli strutturali</h2>
+      <VoteMap />
+
+      <section className="mt-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 className="text-xl font-semibold text-slate-900">Apparato critico e vincoli strutturali</h2>
         <p className="text-xs text-slate-500">
           Dati procedurali oggettivi. Non costituiscono giudizio politico sul merito della norma.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Semaforo attuazione</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Semaforo attuazione</p>
             <div className="mt-2 flex items-center gap-2">
               <span
                 className={`h-3 w-3 rounded-full ${
@@ -125,7 +108,7 @@ export function LawReader({ act }: Props) {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Copertura economica</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Copertura economica</p>
             <p className="mt-2 text-sm font-semibold text-slate-900">{COPERTURA_LABELS[act.copertura]}</p>
             <p className="mt-2 text-xs leading-relaxed text-slate-600">{act.financialNote}</p>
           </div>
@@ -153,49 +136,95 @@ export function LawReader({ act }: Props) {
   );
 }
 
-function ArticleBlock({
-  article,
-  decode,
-  intensity,
-}: {
-  article: LawArticle;
-  decode: boolean;
-  intensity: Intensity;
-}) {
-  const decoded = intensity === 1 ? article.structured : article.simple;
-
+function ArticleBlock({ article, tab }: { article: LawArticle; tab: Tab }) {
   return (
-    <section className="scroll-mt-36">
-      <h2 className="font-serif text-xl font-semibold text-slate-900">
+    <section className="scroll-mt-36 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-slate-900">
         Art. {article.number}
-        <span className="mt-0.5 block text-sm font-normal italic text-slate-500">({article.heading})</span>
+        <span className="mt-0.5 block text-sm font-normal text-slate-500">{article.heading}</span>
       </h2>
 
-      {!decode ? (
-        <div className="gazette-prose mt-3 whitespace-pre-line rounded-xl border border-slate-200 bg-white p-5 font-serif text-[15px] leading-[1.75] text-slate-900">
-          {article.original}
-        </div>
-      ) : (
-        <div className="mt-3 space-y-3">
-          <div
-            className={`rounded-xl border p-5 text-sm leading-relaxed ${
-              intensity === 1
-                ? 'border-amber-100 bg-amber-50/60 text-slate-800'
-                : 'border-emerald-100 bg-emerald-50/60 text-slate-800'
-            }`}
-          >
-            {decoded}
-          </div>
-          <details className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <summary className="cursor-pointer text-xs font-semibold text-slate-600">
-              Mostra testo originale (Art. {article.number})
-            </summary>
-            <p className="mt-3 whitespace-pre-line font-serif text-sm leading-relaxed text-slate-800">
-              {article.original}
-            </p>
-          </details>
-        </div>
+      {tab === 'cittadino' && (
+        <p className="mt-4 text-[15px] leading-relaxed text-slate-800">{article.simple}</p>
       )}
+
+      {tab === 'approfondito' && (
+        <p className="mt-4 text-[15px] leading-relaxed text-slate-800">{article.structured}</p>
+      )}
+
+      {tab === 'giurista' && <GitDiff article={article} />}
+    </section>
+  );
+}
+
+function GitDiff({ article }: { article: LawArticle }) {
+  return (
+    <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="rounded-xl border border-rose-100 bg-rose-50 p-4">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-rose-700">
+          Testo precedente / abrogato
+        </p>
+        <p className="text-sm leading-relaxed text-rose-900/80 line-through decoration-rose-300">
+          Salva diversa disposizione, in materia di «{article.heading}» non si applicavano gli obblighi introdotti
+          dalla presente novella. Il testo previgente è abrogato nei limiti di cui alla disposizione sostitutiva.
+        </p>
+      </div>
+      <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
+          Nuovo testo approvato
+        </p>
+        <p className="whitespace-pre-line font-serif text-sm leading-relaxed text-slate-900">
+          <AddedText text={article.original} />
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AddedText({ text }: { text: string }) {
+  const parts = text.split(/(\d+\s*km\/h|devono essere muniti|contrassegno identificativo|tre anni|tempo reale|16 dicembre 2026|1\.200 milioni)/gi);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <mark key={i} className="rounded-sm bg-emerald-200/80 px-0.5 text-emerald-950">
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+function VoteMap() {
+  return (
+    <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-semibold text-slate-900">🗳️ Come hanno votato i partiti</h2>
+      <p className="mt-1 text-sm text-slate-500">Scrutinio aggregato d’aula (simulazione sull’ultimo passaggio disponibile).</p>
+      <div className="mt-5 flex h-4 w-full overflow-hidden rounded-full">
+        <div className="h-full w-[58%] bg-emerald-500" title="Favorevoli 58%" />
+        <div className="h-full w-[35%] bg-red-400" title="Contrari 35%" />
+        <div className="h-full w-[7%] bg-slate-300" title="Astenuti 7%" />
+      </div>
+      <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-700">
+        <li className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          Favorevoli <span className="font-semibold text-slate-900">58%</span>
+          <span className="text-slate-400">232 voti</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+          Contrari <span className="font-semibold text-slate-900">35%</span>
+          <span className="text-slate-400">140 voti</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+          Astenuti <span className="font-semibold text-slate-900">7%</span>
+          <span className="text-slate-400">28 voti</span>
+        </li>
+      </ul>
     </section>
   );
 }
