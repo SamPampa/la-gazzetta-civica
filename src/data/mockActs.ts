@@ -464,6 +464,510 @@ export const MOCK_ACTS: Act[] = [
       },
     ],
   },
+  {
+    id: 'dl-17-2022',
+    code: 'DL 17/2022',
+    formalTitle: 'DECRETO-LEGGE 1 marzo 2022, n. 17',
+    officialTitle:
+      'Misure urgenti per il contenimento dei costi dell’energia elettrica e del gas naturale.',
+    popularTitle: 'Decreto Energia 2022',
+    summary:
+      'Credito d’imposta per le imprese energivore, rateizzazione delle bollette e fondo di emergenza per le famiglie in difficoltà.',
+    date: '2022-03-01',
+    publishedAt: '2022-03-01',
+    inForceAt: '2022-03-02',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'fisco',
+    copertura: 'a_debito',
+    iterStatus: 'promulgata',
+    decreesMissing: 1,
+    decreeDeadline: '2022-06-30',
+    financialNote:
+      'Oneri per 2,1 miliardi di euro nel 2022, coperti con maggiore ricorso al mercato finanziario (art. 5).',
+    omnibusRisk: null,
+    lobbyCheck: {
+      similarity: 0.82,
+      source: 'Memoria Confindustria Energia, audizione 15 febbraio 2022',
+    },
+    urgency: 20,
+    keywords: ['energia', 'bollette', 'energivore', 'gas', 'decreto legge'],
+    ministry: 'MASE — Ambiente e Sicurezza energetica',
+    preamble:
+      'IL PRESIDENTE DELLA REPUBBLICA\nVisti gli articoli 77 e 87 della Costituzione;\nRitenuta la straordinaria necessità e urgenza di contenere gli effetti dell’aumento dei costi dell’energia;\nEmana il seguente decreto-legge:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Credito d’imposta per le imprese energivore',
+        original:
+          '1. Alle imprese a forte consumo di energia elettrica è riconosciuto, per il primo trimestre 2022, un credito d’imposta pari al 20 per cento delle spese sostenute per la componente energetica, come rilevata nelle fatture di acquisto.',
+        structured:
+          'Credito d’imposta 20% sulla componente energia, I trimestre 2022, per le imprese energivore. Base di calcolo: fatture di acquisto documentate.',
+        simple:
+          'Le aziende che consumano tanta energia recuperano il 20% di quanto pagato in più sulla bolletta del primo trimestre 2022.',
+      },
+      {
+        number: '2',
+        heading: 'Rateizzazione delle bollette',
+        original:
+          '1. I soggetti titolari di utenze non domestiche possono richiedere, per le fatture emesse nel primo semestre 2022, la rateizzazione fino a trentasei rate mensili di pari importo, senza applicazione di interessi.',
+        structured:
+          'Diritto alla rateizzazione fino a 36 mensilità senza interessi per le utenze non domestiche, fatture del I semestre 2022.',
+        simple:
+          'Le partite IVA possono dividere le bollette del primo semestre 2022 fino in 36 rate, senza pagare interessi.',
+      },
+      {
+        number: '3',
+        heading: 'Fondo di emergenza per le famiglie in difficoltà economica',
+        original:
+          '1. È istituito, nello stato di previsione del Ministero del lavoro e delle politiche sociali, un fondo con una dotazione di 400 milioni di euro per l’anno 2022, destinato al sostegno delle famiglie in condizioni di disagio economico a causa dell’aumento dei costi energetici.',
+        structured:
+          'Fondo 400 milioni/2022 al Lavoro per bonus energia alle famiglie in disagio economico. Riparto con decreto attuativo successivo.',
+        simple:
+          'Lo Stato mette 400 milioni per aiutare le famiglie in difficoltà a pagare le bollette più care.',
+      },
+    ],
+  },
+  {
+    id: 'legge-38-2023',
+    code: 'L. 38/2023',
+    formalTitle: 'LEGGE 24 aprile 2023, n. 38',
+    officialTitle:
+      'Disposizioni in materia di detrazioni edilizie e rimodulazione degli incentivi per l’efficientamento energetico.',
+    popularTitle: 'Rimodulazione del Superbonus',
+    summary:
+      'Riduzione dell’aliquota di detrazione, cessione del credito limitata a banche e intermediari, salvaguardia dei cantieri già avviati.',
+    date: '2023-04-24',
+    publishedAt: '2023-04-25',
+    inForceAt: '2023-05-10',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'fisco',
+    copertura: 'tagli_spesa',
+    iterStatus: 'promulgata',
+    decreesMissing: 0,
+    decreeDeadline: null,
+    financialNote:
+      'Riduzione della spesa fiscale stimata in 4,8 miliardi nel triennio 2023-2025, per contrazione dell’aliquota di detrazione.',
+    omnibusRisk: null,
+    lobbyCheck: {
+      similarity: 0.9,
+      source: 'Position paper ANCE, audizione 10 marzo 2023',
+    },
+    urgency: 18,
+    keywords: ['superbonus', 'detrazioni', 'edilizia', 'efficientamento', '110'],
+    ministry: 'MEF — Economia e Finanze',
+    preamble:
+      'La Camera dei deputati e il Senato della Repubblica hanno approvato; IL PRESIDENTE DELLA REPUBBLICA Promulga la seguente legge:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Rimodulazione dell’aliquota di detrazione',
+        original:
+          '1. Per le spese sostenute a decorrere dal 1° gennaio 2023, l’aliquota della detrazione di cui all’articolo 119 del decreto-legge 19 maggio 2020, n. 34, è ridotta al 90 per cento.',
+        structured:
+          'Riduzione dell’aliquota Superbonus dal 110% al 90% per le spese sostenute dal 1° gennaio 2023, novellando l’art. 119 del DL 34/2020.',
+        simple:
+          'Dal 2023 il Superbonus non copre più il 110%, ma il 90% delle spese.',
+      },
+      {
+        number: '2',
+        heading: 'Cessione del credito',
+        original:
+          '1. La cessione del credito d’imposta corrispondente alla detrazione è consentita esclusivamente a favore di banche, intermediari finanziari e imprese di assicurazione, con esclusione di ogni ulteriore cessione a soggetti privati.',
+        structured:
+          'La cessione del credito è riservata a banche/intermediari/assicurazioni; vietata la cessione a privati, per contenere il rischio di frodi.',
+        simple:
+          'Il credito derivante dal Superbonus si può cedere solo a banche o assicurazioni, non più a privati.',
+      },
+      {
+        number: '3',
+        heading: 'Salvaguardia dei cantieri in corso',
+        original:
+          '1. Le disposizioni di cui all’articolo 1 non si applicano agli interventi per i quali, alla data del 31 dicembre 2022, sia stata presentata la comunicazione di inizio lavori asseverata (CILAS).',
+        structured:
+          'Clausola di salvaguardia: i cantieri con CILAS presentata entro il 31/12/2022 restano all’aliquota del 110%.',
+        simple:
+          'Se i lavori erano già iniziati con la pratica giusta (CILAS) prima del 2023, resta valido il vecchio 110%.',
+      },
+    ],
+  },
+  {
+    id: 'dl-60-2024',
+    code: 'DL 60/2024',
+    formalTitle: 'DECRETO-LEGGE 7 maggio 2024, n. 60',
+    officialTitle:
+      'Ulteriori disposizioni urgenti in materia di politiche di coesione, sicurezza nei luoghi di lavoro e occupazione giovanile.',
+    popularTitle: 'Decreto Coesione 2024',
+    summary:
+      'Incentivi all’assunzione di giovani e donne, patente a crediti nei cantieri, rafforzamento dell’Ispettorato del lavoro.',
+    date: '2024-05-07',
+    publishedAt: '2024-05-07',
+    inForceAt: '2024-05-08',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'lavoro',
+    copertura: 'a_debito',
+    iterStatus: 'promulgata',
+    decreesMissing: 1,
+    decreeDeadline: '2024-09-30',
+    financialNote:
+      'Oneri per 1,8 miliardi di euro nel triennio 2024-2026, a valere sul Fondo di rotazione per le politiche di coesione.',
+    omnibusRisk: {
+      article: 'Art. 11',
+      description:
+        'Disposizioni su zone economiche speciali del Mezzogiorno, a bassa coerenza tematica con le misure sull’occupazione giovanile.',
+    },
+    lobbyCheck: null,
+    urgency: 15,
+    keywords: ['lavoro', 'occupazione', 'giovani', 'sicurezza cantieri', 'coesione'],
+    ministry: 'Ministero del Lavoro',
+    preamble:
+      'IL PRESIDENTE DELLA REPUBBLICA\nVisti gli articoli 77 e 87 della Costituzione;\nRitenuta la straordinaria necessità e urgenza di adottare misure per l’occupazione giovanile e la sicurezza nei cantieri;\nEmana il seguente decreto-legge:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Incentivi all’assunzione di giovani e donne',
+        original:
+          '1. Ai datori di lavoro privati che assumono, con contratto a tempo indeterminato, lavoratori di età inferiore a trentacinque anni o donne prive di impiego regolarmente retribuito, è riconosciuto, per un periodo massimo di ventiquattro mesi, l’esonero dal versamento dei contributi previdenziali a carico del datore di lavoro, nel limite massimo di 650 euro mensili per lavoratore.',
+        structured:
+          'Esonero contributivo datoriale fino a 650 euro/mese per 24 mesi, per assunzioni a tempo indeterminato di under 35 o donne disoccupate.',
+        simple:
+          'Se un’azienda assume a tempo indeterminato un giovane under 35 o una donna senza lavoro, per due anni paga meno contributi (fino a 650 euro al mese in meno).',
+      },
+      {
+        number: '2',
+        heading: 'Patente a crediti nei cantieri',
+        original:
+          '1. A decorrere dal 1° ottobre 2024, le imprese operanti nei cantieri temporanei o mobili sono tenute al possesso della patente a crediti, rilasciata dall’Ispettorato nazionale del lavoro, quale requisito per l’esecuzione dei lavori.',
+        structured:
+          'Obbligo di patente a crediti INL per le imprese di cantiere dal 1° ottobre 2024, come requisito abilitante per operare.',
+        simple:
+          'Dall’autunno 2024 le imprese che lavorano nei cantieri devono avere una “patente a punti” rilasciata dall’Ispettorato del lavoro, altrimenti non possono operare.',
+      },
+      {
+        number: '3',
+        heading: 'Rafforzamento dell’Ispettorato nazionale del lavoro',
+        original:
+          '1. La dotazione organica dell’Ispettorato nazionale del lavoro è incrementata di 1.024 unità, da assumere con concorso pubblico, secondo le modalità stabilite con decreto del Ministro del lavoro e delle politiche sociali.',
+        structured:
+          'Incremento organico INL di 1.024 unità via concorso pubblico. Decreto attuativo sulle modalità di assunzione ancora atteso.',
+        simple:
+          'Assumono più di mille ispettori del lavoro in più, ma il concorso e le regole precise arrivano con un decreto successivo.',
+      },
+    ],
+  },
+  {
+    id: 'legge-15-2025',
+    code: 'L. 15/2025',
+    formalTitle: 'LEGGE 12 febbraio 2025, n. 15',
+    officialTitle:
+      'Modifiche al codice penale e al codice di procedura penale in materia di reati informatici e di sicurezza delle infrastrutture digitali.',
+    popularTitle: 'Riforma dei reati informatici',
+    summary:
+      'Nuova aggravante per gli attacchi a infrastrutture critiche, obbligo di notifica dei data breach, task force cybersecurity nelle procure.',
+    date: '2025-02-12',
+    publishedAt: '2025-02-13',
+    inForceAt: '2025-02-28',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'giustizia',
+    copertura: 'invarianza',
+    iterStatus: 'promulgata',
+    decreesMissing: 2,
+    decreeDeadline: '2025-05-30',
+    financialNote:
+      'Invarianza finanziaria: le nuove competenze sono assorbite dalle strutture esistenti presso le procure distrettuali.',
+    omnibusRisk: null,
+    lobbyCheck: null,
+    urgency: 22,
+    keywords: ['cybersecurity', 'reati informatici', 'data breach', 'infrastrutture critiche'],
+    ministry: 'Ministero della Giustizia',
+    preamble:
+      'La Camera dei deputati e il Senato della Repubblica hanno approvato; IL PRESIDENTE DELLA REPUBBLICA Promulga la seguente legge:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Aggravante per attacchi a infrastrutture critiche',
+        original:
+          '1. All’articolo 635-quater del codice penale è aggiunto, in fine, il seguente periodo: «La pena è aumentata da un terzo alla metà se il fatto è commesso in danno di sistemi informatici o telematici di pubblica utilità o di infrastrutture critiche nazionali.»',
+        structured:
+          'Novella dell’art. 635-quater c.p.: aggravante speciale (aumento da 1/3 alla metà) per danneggiamento di sistemi informatici di infrastrutture critiche o di pubblica utilità.',
+        simple:
+          'Chi attacca informaticamente ospedali, reti energetiche o altri servizi essenziali rischia una pena più alta.',
+      },
+      {
+        number: '2',
+        heading: 'Obbligo di notifica dei data breach',
+        original:
+          '1. I titolari del trattamento che gestiscono infrastrutture digitali di rilevanza strategica nazionale notificano all’Agenzia per la cybersicurezza nazionale, entro ventiquattro ore dalla conoscenza, ogni violazione di dati che comporti un rischio elevato per i diritti e le libertà delle persone fisiche.',
+        structured:
+          'Obbligo di notifica entro 24 ore all’ACN per i data breach ad alto rischio, in capo ai titolari di infrastrutture digitali strategiche.',
+        simple:
+          'Se un’azienda strategica subisce un attacco che espone dati sensibili, deve avvisare l’Agenzia per la cybersicurezza entro un giorno.',
+      },
+      {
+        number: '3',
+        heading: 'Task force cybersecurity nelle procure',
+        original:
+          '1. Presso le procure della Repubblica aventi sede nel capoluogo di ogni distretto di corte d’appello è istituita una task force specializzata in materia di reati informatici, composta da magistrati e personale tecnico con specifiche competenze, nell’ambito delle risorse umane disponibili.',
+        structured:
+          'Istituzione di task force cybersecurity nelle procure distrettuali, a organico invariato (nessuna nuova assunzione prevista dalla norma).',
+        simple:
+          'In ogni procura di distretto nasce un gruppo specializzato in reati informatici, ma senza nuovo personale assunto apposta.',
+      },
+    ],
+  },
+  {
+    id: 'dlgs-285-1992',
+    code: 'D.Lgs. 285/1992',
+    formalTitle: 'DECRETO LEGISLATIVO 30 aprile 1992, n. 285',
+    officialTitle: 'Nuovo codice della strada.',
+    popularTitle: 'Codice della Strada (testo storico)',
+    summary:
+      'Il testo fondativo della disciplina della circolazione stradale in Italia: principi generali, classificazione dei veicoli e regime sanzionatorio.',
+    date: '1992-04-30',
+    publishedAt: '1992-05-18',
+    inForceAt: '1993-01-01',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'codice_strada',
+    copertura: 'invarianza',
+    iterStatus: 'promulgata',
+    decreesMissing: 0,
+    decreeDeadline: null,
+    financialNote:
+      'Invarianza finanziaria: l’attuazione è assicurata nell’ambito delle risorse ordinarie degli enti competenti.',
+    omnibusRisk: null,
+    lobbyCheck: null,
+    urgency: 10,
+    keywords: ['codice della strada', 'circolazione', 'veicoli', 'patente', 'sanzioni'],
+    ministry: 'MIT — Infrastrutture e Trasporti',
+    preamble:
+      'IL PRESIDENTE DELLA REPUBBLICA\nVista la legge 13 giugno 1991, n. 190, recante delega al Governo per la revisione delle norme sulla disciplina della circolazione stradale;\nEmana il seguente decreto legislativo:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Principi generali',
+        original:
+          '1. La sicurezza delle persone, nella circolazione stradale, rientra tra le finalità primarie di ordine sociale ed economico perseguite dallo Stato.\n2. Le norme del presente codice, in attuazione dei principi costituzionali di libertà di circolazione, di tutela della salute e di sicurezza pubblica, disciplinano la circolazione dei pedoni, dei veicoli e degli animali sulle strade.',
+        structured:
+          'Norma di apertura: la sicurezza stradale è finalità primaria dello Stato. Il codice disciplina pedoni, veicoli e animali sulle strade, in attuazione dei principi costituzionali.',
+        simple:
+          'Questo articolo dice perché esiste il codice: rendere sicura la strada per tutti, pedoni compresi.',
+      },
+      {
+        number: '46',
+        heading: 'Classificazione dei veicoli',
+        original:
+          '1. Ai fini del presente codice si intendono per veicoli tutte le macchine di qualsiasi specie che circolano sulle strade guidate dall’uomo, e per veicoli a motore quelli provvisti di un motore proprio di propulsione.',
+        structured:
+          'Definizione generale di “veicolo” e di “veicolo a motore”, base per tutte le successive discipline speciali (compresa la micromobilità elettrica introdotta da leggi successive).',
+        simple:
+          'Qui il codice spiega cosa conta come “veicolo”: qualunque macchina guidata da una persona che si muove su strada.',
+      },
+      {
+        number: '213',
+        heading: 'Sanzioni accessorie e sequestro del veicolo',
+        original:
+          '1. Nei casi previsti dal presente codice, il veicolo con il quale è stata commessa la violazione può essere sottoposto a sequestro ai fini della confisca amministrativa, secondo le modalità stabilite dal regolamento di esecuzione.',
+        structured:
+          'Base normativa storica del sequestro amministrativo dei veicoli, richiamata dalle leggi successive che introducono nuove sanzioni accessorie.',
+        simple:
+          'Il codice prevede da sempre che, in certi casi, il veicolo usato per commettere l’infrazione possa essere sequestrato.',
+      },
+    ],
+  },
+  {
+    id: 'l-300-1970',
+    code: 'L. 300/1970',
+    formalTitle: 'LEGGE 20 maggio 1970, n. 300',
+    officialTitle:
+      'Norme sulla tutela della libertà e dignità dei lavoratori, della libertà sindacale e dell’attività sindacale nei luoghi di lavoro, e norme sul collocamento.',
+    popularTitle: 'Statuto dei Lavoratori',
+    summary:
+      'Il testo fondativo dei diritti dei lavoratori in fabbrica e in azienda: libertà di opinione, limiti ai controlli e tutela contro i licenziamenti illegittimi.',
+    date: '1970-05-20',
+    publishedAt: '1970-05-27',
+    inForceAt: '1970-06-11',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'lavoro',
+    copertura: 'invarianza',
+    iterStatus: 'promulgata',
+    decreesMissing: 0,
+    decreeDeadline: null,
+    financialNote:
+      'Invarianza finanziaria: la legge disciplina diritti e procedure, senza istituire nuovi fondi statali.',
+    omnibusRisk: null,
+    lobbyCheck: null,
+    urgency: 8,
+    keywords: ['statuto dei lavoratori', 'sindacale', 'licenziamento', 'dignità', 'lavoro'],
+    ministry: 'Ministero del Lavoro',
+    preamble:
+      'La Camera dei deputati e il Senato della Repubblica hanno approvato; IL PRESIDENTE DELLA REPUBBLICA Promulga la seguente legge:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Libertà di opinione',
+        original:
+          '1. I lavoratori, senza distinzione di opinioni politiche, sindacali e di fede religiosa, hanno diritto, nei luoghi dove prestano la loro opera, di manifestare liberamente il proprio pensiero, nel rispetto dei principi della Costituzione e delle norme della presente legge.',
+        structured:
+          'Diritto alla libera manifestazione del pensiero sul luogo di lavoro, senza distinzione di opinioni politiche, sindacali o religiose, nel rispetto della Costituzione.',
+        simple:
+          'Sul posto di lavoro puoi esprimere le tue opinioni, senza essere discriminato per quello che pensi o in cui credi.',
+      },
+      {
+        number: '4',
+        heading: 'Impianti audiovisivi e controllo a distanza',
+        original:
+          '1. È vietato l’uso di impianti audiovisivi e di altre apparecchiature per finalità di controllo a distanza dell’attività dei lavoratori. Gli impianti e le apparecchiature di controllo che siano richiesti da esigenze organizzative e produttive ovvero dalla sicurezza del lavoro, ma dai quali derivi anche la possibilità di controllo a distanza dell’attività dei lavoratori, possono essere installati soltanto previo accordo con le rappresentanze sindacali aziendali.',
+        structured:
+          'Divieto generale di controllo a distanza dei lavoratori tramite audiovisivi; deroga solo per esigenze organizzative/produttive o di sicurezza, previo accordo sindacale (norma poi modificata dal Jobs Act nel 2015).',
+        simple:
+          'Il datore di lavoro non può spiarti con telecamere solo per controllarti. Se servono per altri motivi (sicurezza, organizzazione), deve prima accordarsi con i sindacati.',
+      },
+      {
+        number: '18',
+        heading: 'Reintegrazione nel posto di lavoro',
+        original:
+          '1. Ove il giudice accerti che non sussistono gli estremi del licenziamento per giusta causa o giustificato motivo addotti dal datore di lavoro, nelle imprese con più di quindici dipendenti, ordina al datore di lavoro la reintegrazione del lavoratore nel posto di lavoro.',
+        structured:
+          'Tutela reale nelle imprese sopra i 15 dipendenti: se il licenziamento è illegittimo, il giudice ordina la reintegrazione (regime poi ridimensionato da riforme successive, tra cui il Jobs Act del 2015).',
+        simple:
+          'Nel testo originale, se ti licenziano senza un vero motivo e l’azienda ha più di 15 dipendenti, il giudice può obbligarla a riprenderti.',
+      },
+    ],
+  },
+  {
+    id: 'dlgs-267-2000',
+    code: 'D.Lgs. 267/2000',
+    formalTitle: 'DECRETO LEGISLATIVO 18 agosto 2000, n. 267',
+    officialTitle: 'Testo unico delle leggi sull’ordinamento degli enti locali.',
+    popularTitle: 'TUEL — Testo Unico Enti Locali',
+    summary:
+      'Il testo che raccoglie l’ordinamento di comuni e province: organi di governo, autonomia statutaria e regole di bilancio.',
+    date: '2000-08-18',
+    publishedAt: '2000-09-28',
+    inForceAt: '2000-10-13',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'giustizia',
+    copertura: 'invarianza',
+    iterStatus: 'promulgata',
+    decreesMissing: 0,
+    decreeDeadline: null,
+    financialNote:
+      'Invarianza finanziaria: testo unico di riordino, senza nuovi oneri per la finanza pubblica.',
+    omnibusRisk: null,
+    lobbyCheck: null,
+    urgency: 6,
+    keywords: ['enti locali', 'comuni', 'tuel', 'ordinamento', 'bilancio comunale'],
+    ministry: 'Ministero dell’Interno',
+    preamble:
+      'IL PRESIDENTE DELLA REPUBBLICA\nVista la legge 8 giugno 1990, n. 142, e successive modificazioni;\nEmana il seguente decreto legislativo:',
+    articles: [
+      {
+        number: '1',
+        heading: 'Principi generali sull’autonomia dei comuni',
+        original:
+          '1. La Repubblica riconosce e promuove le autonomie locali. Il comune è l’ente locale che rappresenta la propria comunità, ne cura gli interessi e ne promuove lo sviluppo.',
+        structured:
+          'Norma di principio: il comune come ente rappresentativo della comunità locale, titolare di autonomia statutaria, organizzativa e finanziaria nei limiti della legge.',
+        simple:
+          'Il comune è l’ente che rappresenta i cittadini di un territorio e si occupa dei loro interessi.',
+      },
+      {
+        number: '36',
+        heading: 'Organi di governo del comune',
+        original:
+          '1. Sono organi di governo del comune il consiglio, la giunta, il sindaco.',
+        structured:
+          'Definizione della struttura di governo comunale: consiglio (organo di indirizzo e controllo), giunta (organo esecutivo), sindaco (organo di vertice e rappresentanza).',
+        simple:
+          'Un comune è governato da tre organi: il consiglio comunale, la giunta e il sindaco.',
+      },
+      {
+        number: '151',
+        heading: 'Principi di bilancio',
+        original:
+          '1. Gli enti locali deliberano il bilancio di previsione finanziario entro il termine stabilito con decreto del Ministro dell’interno, di concerto con il Ministro dell’economia e delle finanze, osservando i principi di unità, annualità, universalità ed integrità, veridicità, pareggio finanziario e pubblicità.',
+        structured:
+          'Principi contabili fondamentali del bilancio comunale: unità, annualità, universalità, veridicità, pareggio e pubblicità. Termine di approvazione fissato con decreto ministeriale.',
+        simple:
+          'Ogni comune deve fare un bilancio annuale, in pareggio e pubblico, seguendo regole comuni a tutta Italia.',
+      },
+    ],
+  },
+  {
+    id: 'dlgs-81-2015',
+    code: 'D.Lgs. 81/2015',
+    formalTitle: 'DECRETO LEGISLATIVO 15 giugno 2015, n. 81',
+    officialTitle:
+      'Disciplina organica dei contratti di lavoro e revisione della normativa in tema di mansioni, a norma dell’articolo 1, comma 7, della legge 10 dicembre 2014, n. 183.',
+    popularTitle: 'Jobs Act — contratti di lavoro',
+    summary:
+      'Riordino dei contratti di lavoro: causali del tempo determinato, somministrazione e nuova disciplina dello ius variandi sulle mansioni.',
+    date: '2015-06-15',
+    publishedAt: '2015-06-24',
+    inForceAt: '2015-07-25',
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: 'Gazzetta Ufficiale — testo su Normattiva',
+    iniziativa: 'governo',
+    materia: 'lavoro',
+    copertura: 'invarianza',
+    iterStatus: 'promulgata',
+    decreesMissing: 0,
+    decreeDeadline: null,
+    financialNote:
+      'Invarianza finanziaria: il riordino dei contratti non comporta nuovi oneri diretti per la finanza pubblica.',
+    omnibusRisk: null,
+    lobbyCheck: null,
+    urgency: 12,
+    keywords: ['jobs act', 'contratti a termine', 'somministrazione', 'mansioni', 'causali'],
+    ministry: 'Ministero del Lavoro',
+    preamble:
+      'IL PRESIDENTE DELLA REPUBBLICA\nVista la legge 10 dicembre 2014, n. 183, recante delega al Governo in materia di riforma degli ammortizzatori sociali e dei contratti di lavoro;\nEmana il seguente decreto legislativo:',
+    articles: [
+      {
+        number: '19',
+        heading: 'Apposizione del termine e durata massima',
+        original:
+          '1. Al contratto di lavoro subordinato può essere apposto un termine di durata non superiore a trentasei mesi.\n2. Il termine del contratto può essere prorogato, con il consenso del lavoratore, per un massimo di cinque volte nell’arco di trentasei mesi.',
+        structured:
+          'Testo originario (2015) del regime del tempo determinato: durata massima 36 mesi, fino a 5 proroghe, senza obbligo generale di causale (regime poi ristretto da riforme successive).',
+        simple:
+          'Nella versione del 2015, un contratto a termine poteva durare fino a 3 anni e essere rinnovato fino a 5 volte, senza dover sempre spiegare il perché.',
+      },
+      {
+        number: '31',
+        heading: 'Limiti quantitativi alla somministrazione',
+        original:
+          '1. Salva diversa disposizione dei contratti collettivi applicati dall’utilizzatore, il numero dei lavoratori somministrati con contratto a tempo determinato non può eccedere il 30 per cento del numero dei lavoratori a tempo indeterminato in forza presso l’utilizzatore.',
+        structured:
+          'Tetto legale del 30% alla somministrazione a termine sull’organico stabile, derogabile dai contratti collettivi.',
+        simple:
+          'Un’azienda non può avere più del 30% di lavoratori “in prestito” (somministrati) rispetto agli assunti fissi, salvo accordi diversi del contratto collettivo.',
+      },
+      {
+        number: '3',
+        heading: 'Mansioni e ius variandi',
+        original:
+          '1. Il lavoratore può essere assegnato dal datore di lavoro a mansioni riconducibili allo stesso livello e categoria legale di inquadramento delle ultime effettivamente svolte, ovvero a mansioni appartenenti al livello di inquadramento inferiore purché rientranti nella medesima categoria legale.',
+        structured:
+          'Ampliamento del potere datoriale di modifica delle mansioni (ius variandi), estendibile anche a un livello di inquadramento inferiore, nella stessa categoria legale.',
+        simple:
+          'Il capo può, in certi casi, cambiarti mansione anche verso un livello un po’ più basso, se resta nella stessa categoria di inquadramento.',
+      },
+    ],
+  },
 ];
 
 export const MINISTRY_DELAYS = [
@@ -494,9 +998,231 @@ const ID_ALIASES: Record<string, string> = {
   'ddl-1435': 'legge-105-2026',
 };
 
-export function getActById(id: string): Act | undefined {
+const RECENT_YEARS_WINDOW = 5;
+
+export function currentYear(): number {
+  return new Date().getFullYear();
+}
+
+export function isRecentAct(act: Act): boolean {
+  const year = Number(act.date.slice(0, 4));
+  return year >= currentYear() - RECENT_YEARS_WINDOW;
+}
+
+function seededRandom(seed: string): () => number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(h, 31) + seed.charCodeAt(i)) >>> 0;
+  }
+  return () => {
+    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
+    return h / 4294967296;
+  };
+}
+
+function pick<T>(rand: () => number, arr: readonly T[]): T {
+  return arr[Math.floor(rand() * arr.length) % arr.length];
+}
+
+const MATERIA_KEYWORDS: Record<Materia, string[]> = {
+  codice_strada: ['strada', 'patente', 'veicol', 'circolazione', 'trasport', 'monopattin'],
+  fisco: ['fisc', 'iva', 'irpef', 'tribut', 'bilancio', 'tasse', 'iras', 'iva'],
+  sanita: ['sanit', 'salute', 'ospedal', 'ssn', 'farmac', 'attesa'],
+  lavoro: ['lavoro', 'contratt', 'sindac', 'occupazion', 'pension', 'somministrazion'],
+  giustizia: ['giustizia', 'penale', 'process', 'civile', 'tribunale', 'reat'],
+};
+
+function guessMateria(text: string, rand: () => number): Materia {
+  const lower = text.toLowerCase();
+  const materie = Object.keys(MATERIA_KEYWORDS) as Materia[];
+  for (const materia of materie) {
+    if (MATERIA_KEYWORDS[materia].some((kw) => lower.includes(kw))) return materia;
+  }
+  return pick(rand, materie);
+}
+
+type ActIdentity =
+  | { kind: 'dlgs' | 'dl' | 'legge'; number: string; year: number }
+  | { kind: 'ac' | 'ac-pop'; number: string }
+  | { kind: 'generic' };
+
+function parseActIdentity(rawId: string): ActIdentity {
+  const id = rawId.toLowerCase().trim();
+  let m: RegExpMatchArray | null;
+  if ((m = id.match(/^dlgs-(\d+)-(\d{4})$/))) return { kind: 'dlgs', number: m[1], year: Number(m[2]) };
+  if ((m = id.match(/^dl-(\d+)-(\d{4})$/))) return { kind: 'dl', number: m[1], year: Number(m[2]) };
+  if ((m = id.match(/^legge-(\d+)-(\d{4})$/))) return { kind: 'legge', number: m[1], year: Number(m[2]) };
+  if ((m = id.match(/^ac-pop-(\d+)$/))) return { kind: 'ac-pop', number: m[1] };
+  if ((m = id.match(/^(?:ddl-ac|ac)-(\d+)$/))) return { kind: 'ac', number: m[1] };
+  return { kind: 'generic' };
+}
+
+const MONTH_NAMES_IT = [
+  'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
+  'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre',
+];
+
+function isoDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+const MINISTRIES = [
+  'MEF — Economia e Finanze',
+  'Ministero della Salute',
+  'Ministero del Lavoro',
+  'Ministero della Giustizia',
+  'MIT — Infrastrutture e Trasporti',
+  'MASE — Ambiente e Sicurezza energetica',
+  'Ministero dell’Interno',
+];
+
+/**
+ * Genera al volo una scheda formalmente completa per un identificativo o una
+ * query non presenti nel corpus mockato, così che qualsiasi atto storico o
+ * futuro resti sempre apribile e coerente con la struttura `Act`.
+ */
+export function generateFallbackAct(rawIdOrQuery: string): Act {
+  const identity = parseActIdentity(rawIdOrQuery);
+  const rand = seededRandom(rawIdOrQuery.toLowerCase());
+  const materia = guessMateria(rawIdOrQuery, rand);
+  const ministry = pick(rand, MINISTRIES);
+
+  const month = Math.floor(rand() * 12) + 1;
+  const day = Math.floor(rand() * 27) + 1;
+
+  let year: number;
+  let code: string;
+  let formalTitle: string;
+  let id: string;
+
+  if (identity.kind === 'dlgs' || identity.kind === 'dl' || identity.kind === 'legge') {
+    year = identity.year;
+    const label = identity.kind === 'dlgs' ? 'D.Lgs.' : identity.kind === 'dl' ? 'DL' : 'L.';
+    code = `${label} ${identity.number}/${year}`;
+    const formalKind =
+      identity.kind === 'dlgs'
+        ? 'DECRETO LEGISLATIVO'
+        : identity.kind === 'dl'
+          ? 'DECRETO-LEGGE'
+          : 'LEGGE';
+    formalTitle = `${formalKind} ${day} ${MONTH_NAMES_IT[month - 1]} ${year}, n. ${identity.number}`;
+    id = `${identity.kind}-${identity.number}-${year}`;
+  } else if (identity.kind === 'ac' || identity.kind === 'ac-pop') {
+    year = currentYear();
+    code = identity.kind === 'ac-pop' ? `DDL AC POP ${identity.number}` : `DDL AC ${identity.number}`;
+    formalTitle =
+      identity.kind === 'ac-pop'
+        ? `Disegno di legge di iniziativa popolare A.C. POP ${identity.number}`
+        : `Disegno di legge A.C. ${identity.number}`;
+    id = identity.kind === 'ac-pop' ? `ac-pop-${identity.number}` : `ac-${identity.number}`;
+  } else {
+    year = currentYear() - Math.floor(rand() * 6);
+    const words = rawIdOrQuery
+      .replace(/[-_]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const label = words.length
+      ? words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      : 'Atto normativo';
+    code = `ATTO ${label.toUpperCase()}`.slice(0, 40);
+    formalTitle = `Provvedimento normativo — ${label}`;
+    id = rawIdOrQuery.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'atto-generico';
+  }
+
+  const materiaLabel: Record<Materia, string> = {
+    codice_strada: 'della circolazione stradale',
+    fisco: 'fiscale e di finanza pubblica',
+    sanita: 'sanitaria e di assistenza',
+    lavoro: 'di lavoro e previdenza sociale',
+    giustizia: 'di giustizia e ordinamento',
+  };
+
+  const officialTitle = `Disposizioni in materia ${materiaLabel[materia]}, generate a partire dall’identificativo «${rawIdOrQuery}».`;
+  const popularTitle = `Atto ${code}`;
+  const isHistoric = year < currentYear() - RECENT_YEARS_WINDOW;
+  const iterStatus: IterStatus = identity.kind === 'ac' || identity.kind === 'ac-pop' ? pick(rand, ['in_commissione', 'in_aula', 'navetta_senato'] as const) : 'promulgata';
+  const iniziativa: Iniziativa = identity.kind === 'ac-pop' ? 'popolare' : identity.kind === 'ac' ? pick(rand, ['governo', 'parlamentare'] as const) : 'governo';
+  const copertura: Copertura = pick(rand, ['invarianza', 'a_debito', 'tagli_spesa'] as const);
+  const decreesMissing = iterStatus === 'promulgata' ? Math.floor(rand() * 3) : 0;
+  const decreeDeadline = decreesMissing > 0 ? isoDate(year, ((month + 5) % 12) + 1, 15) : null;
+
+  const financialNoteByCopertura: Record<Copertura, string> = {
+    invarianza: 'Clausola di invarianza finanziaria: l’attuazione avviene nell’ambito delle risorse ordinarie già disponibili.',
+    a_debito: `Oneri coperti mediante maggiore ricorso al mercato finanziario, secondo la relazione tecnica allegata al provvedimento.`,
+    tagli_spesa: 'Copertura tramite riduzione di autorizzazioni di spesa preesistenti, come da relazione tecnica.',
+  };
+
+  const heading1 = 'Finalità e oggetto';
+  const heading2 = 'Disposizioni attuative';
+  const heading3 = 'Copertura e disposizioni finali';
+
+  const articles: LawArticle[] = [
+    {
+      number: '1',
+      heading: heading1,
+      original: `1. Il presente provvedimento reca disposizioni ${materiaLabel[materia]}, al fine di adeguare la normativa vigente alle esigenze emerse nel settore di riferimento.\n2. Le disposizioni del presente articolo si applicano su tutto il territorio nazionale, salva diversa previsione di legge.`,
+      structured: `Articolo di apertura: definisce l’oggetto (materia ${materiaLabel[materia]}) e l’ambito di applicazione nazionale del provvedimento ${code}.`,
+      simple: `Questo primo articolo spiega di cosa parla il provvedimento ${code}: regole ${materiaLabel[materia]}, valide in tutta Italia.`,
+    },
+    {
+      number: '2',
+      heading: heading2,
+      original: `1. Con decreto del Ministro competente, da adottare entro sessanta giorni dalla data di entrata in vigore del presente provvedimento, sono stabilite le modalità tecniche di attuazione delle disposizioni di cui all’articolo 1.\n2. Fino all’adozione del decreto di cui al comma 1, restano applicabili le disposizioni previgenti in quanto compatibili.`,
+      structured: `Rinvio a un decreto attuativo entro 60 giorni per le modalità tecniche. Clausola di ultrattività della disciplina previgente fino all’emanazione del decreto.`,
+      simple: `I dettagli pratici arrivano con un decreto entro due mesi. Finché non esce, valgono ancora le regole di prima (se compatibili).`,
+    },
+    {
+      number: '3',
+      heading: heading3,
+      original: `1. Agli oneri derivanti dal presente provvedimento si provvede ai sensi della relazione tecnica allegata.\n2. Il presente provvedimento entra in vigore il giorno successivo a quello della sua pubblicazione nella Gazzetta Ufficiale.`,
+      structured: `Copertura finanziaria come da relazione tecnica (${COPERTURA_LABEL_INTERNAL[copertura]}). Entrata in vigore il giorno successivo alla pubblicazione.`,
+      simple: `Come si paga questo provvedimento è scritto nella relazione tecnica. Diventa legge il giorno dopo la pubblicazione in Gazzetta Ufficiale.`,
+    },
+  ];
+
+  return {
+    id,
+    code,
+    formalTitle,
+    officialTitle,
+    popularTitle,
+    summary: `Provvedimento generato automaticamente a partire dall’identificativo «${rawIdOrQuery}», in materia ${materiaLabel[materia]}.`,
+    date: isoDate(year, month, day),
+    publishedAt: iterStatus === 'promulgata' ? isoDate(year, month, day + 1) : null,
+    inForceAt: iterStatus === 'promulgata' ? isoDate(year, month, day + 15 > 28 ? 28 : day + 15) : null,
+    sourceUrl: 'https://www.normattiva.it/',
+    sourceLabel: isHistoric ? 'Gazzetta Ufficiale — testo su Normattiva' : 'Testo su Normattiva / LOD Camera',
+    iniziativa,
+    materia,
+    copertura,
+    iterStatus,
+    decreesMissing,
+    decreeDeadline,
+    financialNote: financialNoteByCopertura[copertura],
+    omnibusRisk: null,
+    lobbyCheck: null,
+    urgency: isHistoric ? Math.floor(rand() * 15) : Math.floor(rand() * 40) + 10,
+    keywords: [materia.replace('_', ' '), code.toLowerCase()],
+    ministry,
+    preamble:
+      identity.kind === 'ac' || identity.kind === 'ac-pop'
+        ? 'Onorevoli Colleghi! — Il presente disegno di legge è sottoposto all’esame del Parlamento nelle forme previste dal regolamento.'
+        : 'IL PRESIDENTE DELLA REPUBBLICA\nVisti gli articoli della Costituzione applicabili alla materia;\nEmana il seguente provvedimento:',
+    articles,
+  };
+}
+
+const COPERTURA_LABEL_INTERNAL: Record<Copertura, string> = {
+  invarianza: 'invarianza finanziaria',
+  a_debito: 'ricorso al mercato finanziario',
+  tagli_spesa: 'riduzione di spesa preesistente',
+};
+
+export function getActById(id: string): Act {
   const resolved = ID_ALIASES[id] ?? id;
-  return MOCK_ACTS.find((act) => act.id === resolved);
+  const found = MOCK_ACTS.find((act) => act.id === resolved);
+  return found ?? generateFallbackAct(id);
 }
 
 export function daysLate(deadline: string | null): number {

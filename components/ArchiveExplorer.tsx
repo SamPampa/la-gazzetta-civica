@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { ActCard } from '@/components/ActCard';
 import {
   COPERTURA_LABELS,
@@ -10,6 +10,8 @@ import {
 } from '@/lib/labels';
 import {
   MOCK_ACTS,
+  currentYear,
+  isRecentAct,
   searchActs,
   type Copertura,
   type Iniziativa,
@@ -18,20 +20,28 @@ import {
 } from '@/src/data/mockActs';
 
 type SortKey = 'date' | 'urgency';
+type TimeRange = 'all' | 'recent' | 'historic';
 const ALL = 'all';
+const PAGE_SIZE = 6;
+
+const RECENT_WINDOW_LABEL = `Ultimi 5 anni (${currentYear() - 5} - ${currentYear()})`;
 
 export function ArchiveExplorer() {
   const [query, setQuery] = useState('');
   const [submitted, setSubmitted] = useState('');
+  const [timeRange, setTimeRange] = useState<TimeRange>('recent');
   const [iter, setIter] = useState<IterStatus | typeof ALL>(ALL);
   const [iniziativa, setIniziativa] = useState<Iniziativa | typeof ALL>(ALL);
   const [materia, setMateria] = useState<Materia | typeof ALL>(ALL);
   const [copertura, setCopertura] = useState<Copertura | typeof ALL>(ALL);
   const [sort, setSort] = useState<SortKey>('urgency');
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const base = submitted.trim() ? searchActs(submitted) : [...MOCK_ACTS];
     const list = base.filter((act) => {
+      if (timeRange === 'recent' && !isRecentAct(act)) return false;
+      if (timeRange === 'historic' && isRecentAct(act)) return false;
       if (iter !== ALL && act.iterStatus !== iter) return false;
       if (iniziativa !== ALL && act.iniziativa !== iniziativa) return false;
       if (materia !== ALL && act.materia !== materia) return false;
@@ -42,7 +52,15 @@ export function ArchiveExplorer() {
       if (sort === 'urgency') return b.urgency - a.urgency;
       return b.date.localeCompare(a.date);
     });
-  }, [submitted, iter, iniziativa, materia, copertura, sort]);
+  }, [submitted, timeRange, iter, iniziativa, materia, copertura, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [submitted, timeRange, iter, iniziativa, materia, copertura, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const onSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -52,6 +70,7 @@ export function ArchiveExplorer() {
   const reset = () => {
     setQuery('');
     setSubmitted('');
+    setTimeRange('recent');
     setIter(ALL);
     setIniziativa(ALL);
     setMateria(ALL);
@@ -65,7 +84,7 @@ export function ArchiveExplorer() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca per parole chiave, materia o linguaggio naturale (es. monopattini, liste d’attesa, IVA)"
+          placeholder="Cerca per titolo, numero legge, articolo o materia (es. 285/1992, monopattini, IVA)"
           className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-4 pr-28 text-sm text-slate-900 outline-none ring-blue-600/15 placeholder:text-slate-400 focus:border-blue-400 focus:ring-4"
         />
         <button
@@ -75,6 +94,20 @@ export function ArchiveExplorer() {
           Cerca
         </button>
       </form>
+
+      <div className="flex flex-wrap gap-2">
+        <TimeChip label="Tutti gli atti" active={timeRange === 'all'} onClick={() => setTimeRange('all')} />
+        <TimeChip
+          label={RECENT_WINDOW_LABEL}
+          active={timeRange === 'recent'}
+          onClick={() => setTimeRange('recent')}
+        />
+        <TimeChip
+          label="Storico (> 5 anni)"
+          active={timeRange === 'historic'}
+          onClick={() => setTimeRange('historic')}
+        />
+      </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -129,7 +162,7 @@ export function ArchiveExplorer() {
       </div>
 
       <p className="text-sm text-slate-500">
-        {filtered.length} {filtered.length === 1 ? 'norma' : 'norme'} in elenco
+        {filtered.length} {filtered.length === 1 ? 'norma' : 'norme'} trovate
         {submitted ? ` per «${submitted}»` : ''}
       </p>
 
@@ -138,11 +171,37 @@ export function ArchiveExplorer() {
           Nessun atto corrisponde a ricerca e filtri. Modifica i criteri o azzera.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {filtered.map((act) => (
-            <ActCard key={act.id} act={act} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            {paged.map((act) => (
+              <ActCard key={act.id} act={act} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <nav className="flex items-center justify-between gap-3 pt-2 text-sm">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+              >
+                ← Precedente
+              </button>
+              <span className="text-xs text-slate-500">
+                Pagina {currentPage} di {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+              >
+                Successiva →
+              </button>
+            </nav>
+          )}
+        </>
       )}
     </div>
   );
@@ -150,6 +209,22 @@ export function ArchiveExplorer() {
 
 function typedOptions<T extends string>(labels: Record<T, string>) {
   return (Object.keys(labels) as T[]).map((key) => ({ value: key, label: labels[key] }));
+}
+
+function TimeChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+        active
+          ? 'border-slate-900 bg-slate-900 text-white'
+          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+      }`}
+    >
+      {label}
+    </button>
+  );
 }
 
 function FilterSelect({

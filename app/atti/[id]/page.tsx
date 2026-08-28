@@ -2,7 +2,6 @@ import { LawReader } from '@/components/LawReader';
 import { MOCK_ACTS, getActById } from '@/src/data/mockActs';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -15,14 +14,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const act = getActById(id);
-  if (!act) return { title: 'Norma non trovata' };
   return { title: act.formalTitle, description: act.officialTitle };
 }
 
 export default async function ActPage({ params }: Props) {
   const { id } = await params;
   const act = getActById(id);
-  if (!act) notFound();
 
   return (
     <main>
