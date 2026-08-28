@@ -5,12 +5,12 @@ import type { Act, LawArticle } from '@/src/data/mockActs';
 import { daysLate } from '@/src/data/mockActs';
 import { COPERTURA_LABELS, formatDateIT } from '@/lib/labels';
 
-type Tab = 'cittadino' | 'approfondito' | 'giurista';
+type Level = 'cittadino' | 'approfondito' | 'giurista';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'cittadino', label: '🟢 Cittadino (Sintetico)' },
-  { id: 'approfondito', label: '🟡 Approfondito (Focus)' },
-  { id: 'giurista', label: '🔴 Giurista / Tecnico' },
+const LEVEL_OPTIONS: { id: Level; label: string }[] = [
+  { id: 'cittadino', label: '🟢 Cittadino (Impatto pratico)' },
+  { id: 'approfondito', label: '🟡 Approfondito (Focus commi & risorse)' },
+  { id: 'giurista', label: '🔴 Giurista (Note tecniche & novellazioni)' },
 ];
 
 type Props = {
@@ -18,19 +18,22 @@ type Props = {
 };
 
 export function LawReader({ act }: Props) {
-  const [tab, setTab] = useState<Tab>('cittadino');
+  const [decode, setDecode] = useState(false);
+  const [level, setLevel] = useState<Level>('cittadino');
   const late = daysLate(act.decreeDeadline);
 
   return (
-    <article className="mx-auto max-w-5xl">
-      <header className="mx-auto mb-6 max-w-3xl space-y-3">
+    <article className="mx-auto max-w-3xl">
+      <header className="mb-6 space-y-3">
         <p className="font-mono text-xs uppercase tracking-[0.16em] text-slate-500">{act.code}</p>
         <h1 className="text-3xl font-semibold leading-tight text-slate-900">{act.formalTitle}</h1>
         <p className="text-base leading-relaxed text-slate-500">{act.officialTitle}</p>
         <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
           <div>
             <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pubblicazione</dt>
-            <dd className="text-slate-900">{act.publishedAt ? formatDateIT(act.publishedAt) : 'Non ancora pubblicata in G.U.'}</dd>
+            <dd className="text-slate-900">
+              {act.publishedAt ? formatDateIT(act.publishedAt) : 'Non ancora pubblicata in G.U.'}
+            </dd>
           </div>
           <div>
             <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Entrata in vigore</dt>
@@ -49,28 +52,46 @@ export function LawReader({ act }: Props) {
         </a>
       </header>
 
-      <div className="sticky top-[4.25rem] z-40 mb-8 rounded-2xl border border-slate-200 bg-slate-100 p-1 shadow-sm">
-        <div className="grid grid-cols-3 gap-1">
-          {TABS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setTab(item.id)}
-              className={`rounded-xl px-2 py-2.5 text-center text-[11px] font-medium transition sm:text-sm ${
-                tab === item.id
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'bg-transparent text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+      <div className="sticky top-[4.25rem] z-40 -mx-4 mb-6 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-0 sm:px-0">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-800">
+            <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+                checked={decode}
+                onChange={(e) => setDecode(e.target.checked)}
+              />
+              <span className="pointer-events-none absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-600 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500" />
+              <span className="pointer-events-none absolute left-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
+            </span>
+            Decodifica &amp; Spiegazione
+          </label>
+
+          <select
+            value={level}
+            disabled={!decode}
+            onChange={(e) => setLevel(e.target.value as Level)}
+            className={`rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 sm:text-sm ${
+              decode ? '' : 'cursor-not-allowed opacity-40'
+            }`}
+          >
+            {LEVEL_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
+      {act.preamble && (
+        <p className="mb-8 whitespace-pre-line font-serif text-sm leading-relaxed text-slate-700">{act.preamble}</p>
+      )}
+
       <div className="space-y-8">
         {act.articles.map((article) => (
-          <ArticleBlock key={article.number} article={article} tab={tab} />
+          <ArticleBlock key={article.number} article={article} decode={decode} level={level} />
         ))}
       </div>
 
@@ -136,65 +157,81 @@ export function LawReader({ act }: Props) {
   );
 }
 
-function ArticleBlock({ article, tab }: { article: LawArticle; tab: Tab }) {
+function ArticleBlock({
+  article,
+  decode,
+  level,
+}: {
+  article: LawArticle;
+  decode: boolean;
+  level: Level;
+}) {
   return (
-    <section className="scroll-mt-36 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900">
+    <section className="scroll-mt-36">
+      <h2 className="font-serif text-xl font-semibold text-slate-900">
         Art. {article.number}
-        <span className="mt-0.5 block text-sm font-normal text-slate-500">{article.heading}</span>
+        <span className="mt-0.5 block text-sm font-normal italic text-slate-500">({article.heading})</span>
       </h2>
 
-      {tab === 'cittadino' && (
-        <p className="mt-4 text-[15px] leading-relaxed text-slate-800">{article.simple}</p>
-      )}
+      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-5">
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          Testo ufficiale (Gazzetta Ufficiale / Parlamento)
+        </p>
+        <p className="whitespace-pre-line font-serif text-[15px] leading-[1.75] text-slate-900">
+          {article.original}
+        </p>
+      </div>
 
-      {tab === 'approfondito' && (
-        <p className="mt-4 text-[15px] leading-relaxed text-slate-800">{article.structured}</p>
-      )}
-
-      {tab === 'giurista' && <GitDiff article={article} />}
+      {decode && <ExplanationBox article={article} level={level} />}
     </section>
   );
 }
 
-function GitDiff({ article }: { article: LawArticle }) {
-  return (
-    <div className="mt-4 grid gap-3 md:grid-cols-2">
-      <div className="rounded-xl border border-rose-100 bg-rose-50 p-4">
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-rose-700">
-          Testo precedente / abrogato
-        </p>
-        <p className="text-sm leading-relaxed text-rose-900/80 line-through decoration-rose-300">
-          Salva diversa disposizione, in materia di «{article.heading}» non si applicavano gli obblighi introdotti
-          dalla presente novella. Il testo previgente è abrogato nei limiti di cui alla disposizione sostitutiva.
-        </p>
-      </div>
-      <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+function ExplanationBox({ article, level }: { article: LawArticle; level: Level }) {
+  if (level === 'cittadino') {
+    return (
+      <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-5">
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
-          Nuovo testo approvato
+          🟢 Cittadino — impatto pratico
         </p>
-        <p className="whitespace-pre-line font-serif text-sm leading-relaxed text-slate-900">
-          <AddedText text={article.original} />
-        </p>
+        <p className="text-sm leading-relaxed text-slate-800">{article.simple}</p>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-function AddedText({ text }: { text: string }) {
-  const parts = text.split(/(\d+\s*km\/h|devono essere muniti|contrassegno identificativo|tre anni|tempo reale|16 dicembre 2026|1\.200 milioni)/gi);
+  if (level === 'approfondito') {
+    return (
+      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/60 p-5">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
+          🟡 Approfondito — focus commi &amp; risorse
+        </p>
+        <p className="text-sm leading-relaxed text-slate-800">{article.structured}</p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      {parts.map((part, i) =>
-        i % 2 === 1 ? (
-          <mark key={i} className="rounded-sm bg-emerald-200/80 px-0.5 text-emerald-950">
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </>
+    <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50/60 p-5">
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-rose-800">
+        🔴 Giurista — note tecniche &amp; novellazioni
+      </p>
+      <ul className="space-y-2 text-sm leading-relaxed text-slate-800">
+        <li className="flex gap-2">
+          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+          <span>
+            <span className="font-mono text-xs text-rose-700">Rif. novella —</span> {article.structured}
+          </span>
+        </li>
+        <li className="flex gap-2">
+          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+          <span>
+            <span className="font-mono text-xs text-rose-700">Nota tecnica —</span> Il comma riportato sopra è
+            testo autentico; verificare la disciplina previgente sulla fonte ufficiale prima di ogni applicazione
+            pratica al caso concreto.
+          </span>
+        </li>
+      </ul>
+    </div>
   );
 }
 
@@ -202,7 +239,9 @@ function VoteMap() {
   return (
     <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
       <h2 className="text-xl font-semibold text-slate-900">🗳️ Come hanno votato i partiti</h2>
-      <p className="mt-1 text-sm text-slate-500">Scrutinio aggregato d’aula (simulazione sull’ultimo passaggio disponibile).</p>
+      <p className="mt-1 text-sm text-slate-500">
+        Scrutinio aggregato d’aula (simulazione sull’ultimo passaggio disponibile).
+      </p>
       <div className="mt-5 flex h-4 w-full overflow-hidden rounded-full">
         <div className="h-full w-[58%] bg-emerald-500" title="Favorevoli 58%" />
         <div className="h-full w-[35%] bg-red-400" title="Contrari 35%" />
