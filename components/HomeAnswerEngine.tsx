@@ -2,16 +2,28 @@
 
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import type { RagCitation, RagResponse } from '@/lib/types/rag';
+import type { RagCitation, RagResponse, RetrievedHistoricalStatute } from '@/lib/types/rag';
 
 const TRENDING = [
   { tag: '#CodiceDellaStrada', query: 'Cosa cambia per i neopatentati?' },
   { tag: '#ListeAttesaSanità', query: 'Cosa cambia per le liste di attesa?' },
   { tag: '#DecretoFiscale', query: 'Cosa cambia con il decreto fiscale?' },
+  { tag: '#BonusRistrutturazioni', query: 'Cosa cambia per i bonus ristrutturazione ed edilizi?' },
 ];
 
 const CITATION_BADGE_CLASS =
-  'inline-flex items-center text-xs font-mono bg-blue-50 text-blue-700 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200';
+  'inline-flex items-center text-xs font-mono font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 transition-colors mx-0.5';
+
+/** Generalized slide-over drawer payload — populated either from a Level 1
+ * numbered citation or from a Level 2 historical statute card, so a single
+ * drawer component/state covers both "open the verbatim source" flows. */
+type DrawerContent = {
+  title: string;
+  subtitle: string;
+  verbatim: string;
+  sourceUrl?: string;
+  actId?: string;
+};
 
 /** Splits a synthesized answer on `[1]`, `[2]`, ... markers and renders each
  * one as an interactive citation button wired to `onOpen`, falling back to
@@ -42,7 +54,7 @@ function renderAnswerWithCitations(
           key={key++}
           type="button"
           onClick={() => onOpen(citation)}
-          className={`${CITATION_BADGE_CLASS} mx-0.5 ${activeIndex === n ? 'ring-2 ring-blue-400' : ''}`}
+          className={`${CITATION_BADGE_CLASS} ${activeIndex === n ? 'ring-2 ring-blue-400' : ''}`}
           aria-label={`Apri fonte citata numero ${n}`}
         >
           [{n}]
@@ -69,13 +81,13 @@ function LoadingPulse() {
   );
 }
 
-function CitationDrawer({ citation, onClose }: { citation: RagCitation; onClose: () => void }) {
+function VerbatimDrawer({ content, onClose }: { content: DrawerContent; onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"
       role="dialog"
       aria-modal="true"
-      aria-label={`Fonte verbatim: ${citation.actCode}, art. ${citation.articleNumber}`}
+      aria-label={`Testo verbatim: ${content.title}`}
       onClick={onClose}
     >
       <div
@@ -84,9 +96,8 @@ function CitationDrawer({ citation, onClose }: { citation: RagCitation; onClose:
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-slate-400">Fonte [{citation.index}]</p>
-            <h3 className="mt-1 text-lg font-semibold text-slate-900">{citation.actCode}</h3>
-            <p className="mt-0.5 text-sm leading-snug text-slate-500">{citation.actTitle}</p>
+            <h3 className="text-lg font-semibold text-slate-900">{content.title}</h3>
+            <p className="mt-0.5 text-sm leading-snug text-slate-500">{content.subtitle}</p>
           </div>
           <button
             type="button"
@@ -98,26 +109,67 @@ function CitationDrawer({ citation, onClose }: { citation: RagCitation; onClose:
           </button>
         </div>
 
-        <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Art. {citation.articleNumber}</p>
-        <blockquote className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4 font-serif text-[15px] italic leading-relaxed text-slate-700">
-          «{citation.snippetVerbatim}»
+        <blockquote className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 font-serif text-[15px] italic leading-relaxed text-slate-700">
+          «{content.verbatim}»
         </blockquote>
 
         <div className="mt-5 flex flex-col gap-2">
-          <Link href={`/atti/${citation.actId}`} className="text-sm font-medium text-blue-700 hover:underline">
-            Apri l&apos;atto integrale →
-          </Link>
-          {citation.officialSourceUrl && (
+          {content.actId && (
+            <Link href={`/atti/${content.actId}`} className="text-sm font-medium text-blue-700 hover:underline">
+              Vai alla scheda atto →
+            </Link>
+          )}
+          {content.sourceUrl && (
             <a
-              href={citation.officialSourceUrl}
+              href={content.sourceUrl}
               target="_blank"
               rel="noreferrer"
               className="text-xs text-slate-400 hover:text-slate-600 hover:underline"
             >
-              Fonte ufficiale ↗
+              Apri su Normattiva ↗
             </a>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function HistoricalStatuteCard({
+  statute,
+  onOpen,
+}: {
+  statute: RetrievedHistoricalStatute;
+  onOpen: (statute: RetrievedHistoricalStatute) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">{statute.actCode}</p>
+          <p className="text-xs text-slate-500">Art. {statute.articleNumber}</p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+            statute.isLocallyCached ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+          }`}
+        >
+          {statute.isLocallyCached ? 'Archivio Storico Locale' : 'Recuperato da Normattiva'}
+        </span>
+      </div>
+      <p className="mt-2 text-xs leading-relaxed text-slate-600">{statute.officialTitle}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={() => onOpen(statute)} className="text-xs font-medium text-blue-700 hover:underline">
+          Visualizza testo autentico →
+        </button>
+        <a
+          href={statute.sourceUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs text-slate-400 hover:text-slate-600 hover:underline"
+        >
+          Fonte ufficiale ↗
+        </a>
       </div>
     </div>
   );
@@ -128,16 +180,41 @@ export function HomeAnswerEngine() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ragResponse, setRagResponse] = useState<RagResponse | null>(null);
-  const [activeCitation, setActiveCitation] = useState<RagCitation | null>(null);
-  const [historicalContextOpen, setHistoricalContextOpen] = useState(true);
-  const [deepGroundingOpen, setDeepGroundingOpen] = useState(true);
-  const [neutralBalanceOpen, setNeutralBalanceOpen] = useState(true);
+  const [activeDrawer, setActiveDrawer] = useState<DrawerContent | null>(null);
+  const [activeCitationIndex, setActiveCitationIndex] = useState<number | null>(null);
 
-  // Close any open citation drawer whenever a fresh answer replaces the
-  // previous one, so the drawer never shows a citation from a stale answer.
+  // Close any open drawer whenever a fresh answer replaces the previous
+  // one, so it never shows content pulled from a stale answer.
   useEffect(() => {
-    setActiveCitation(null);
+    setActiveDrawer(null);
+    setActiveCitationIndex(null);
   }, [ragResponse]);
+
+  function openCitationDrawer(citation: RagCitation) {
+    setActiveCitationIndex(citation.index);
+    setActiveDrawer({
+      title: citation.actCode,
+      subtitle: `${citation.actTitle} — Art. ${citation.articleNumber}`,
+      verbatim: citation.snippetVerbatim,
+      sourceUrl: citation.officialSourceUrl,
+      actId: citation.actId,
+    });
+  }
+
+  function openHistoricalDrawer(statute: RetrievedHistoricalStatute) {
+    setActiveCitationIndex(null);
+    setActiveDrawer({
+      title: statute.actCode,
+      subtitle: `${statute.officialTitle} — Art. ${statute.articleNumber}`,
+      verbatim: statute.verbatimSnippet,
+      sourceUrl: statute.sourceUrl,
+    });
+  }
+
+  function closeDrawer() {
+    setActiveDrawer(null);
+    setActiveCitationIndex(null);
+  }
 
   async function runQuery(raw: string) {
     const value = raw.trim();
@@ -173,7 +250,14 @@ export function HomeAnswerEngine() {
   }
 
   const paragraphs = ragResponse?.answer.split(/\n{2,}/).filter(Boolean) ?? [];
-  const activeIndex = activeCitation?.index ?? null;
+
+  const extended = ragResponse?.extendedAnalysis;
+  const hasHistoricalContext = Boolean(extended?.historicalContext);
+  const historicalStatutes = extended?.retrievedHistoricalStatutes ?? [];
+  const comparativeTable = extended?.comparativeTable ?? [];
+  const dossier = extended?.neutralTechnicalDossier;
+  const hasDossier = Boolean(dossier && (dossier.pros.length > 0 || dossier.cons.length > 0));
+  const hasLevel2Content = hasHistoricalContext || historicalStatutes.length > 0 || comparativeTable.length > 0 || hasDossier;
 
   return (
     <>
@@ -225,6 +309,7 @@ export function HomeAnswerEngine() {
         )}
       </section>
 
+      {/* Level 1 — Civic Direct Answer Card */}
       {ragResponse && !loading && (
         <section className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -241,151 +326,124 @@ export function HomeAnswerEngine() {
           <div className="mt-4 space-y-3 text-[15px] leading-relaxed text-slate-800">
             {paragraphs.length > 0 ? (
               paragraphs.map((paragraph, i) => (
-                <p key={i}>{renderAnswerWithCitations(paragraph, ragResponse.citations, activeIndex, setActiveCitation)}</p>
+                <p key={i}>{renderAnswerWithCitations(paragraph, ragResponse.citations, activeCitationIndex, openCitationDrawer)}</p>
               ))
             ) : (
               <p className="text-sm text-slate-500">Nessuna risposta disponibile per questa domanda.</p>
             )}
           </div>
+        </section>
+      )}
 
-          {(ragResponse.extendedAnalysis.historicalContext ||
-            ragResponse.extendedAnalysis.retrievedHistoricalStatutes.length > 0) && (
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <button
-                type="button"
-                onClick={() => setHistoricalContextOpen((v) => !v)}
-                className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-800"
-              >
-                <span>📜 Contesto Storico</span>
-                <span className="text-slate-400">{historicalContextOpen ? '−' : '+'}</span>
-              </button>
-              {historicalContextOpen && (
-                <div className="mt-3 space-y-3">
-                  {ragResponse.extendedAnalysis.historicalContext && (
-                    <p className="text-xs leading-relaxed text-slate-600">{ragResponse.extendedAnalysis.historicalContext}</p>
-                  )}
-                  {ragResponse.extendedAnalysis.retrievedHistoricalStatutes.length > 0 && (
-                    <ul className="space-y-2">
-                      {ragResponse.extendedAnalysis.retrievedHistoricalStatutes.map((statute, i) => (
-                        <li key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-xs font-medium text-slate-700">
-                              {statute.actCode} — {statute.officialTitle}, art. {statute.articleNumber}
-                            </p>
-                            {statute.isLocallyCached && (
-                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                                Archivio verificato
-                              </span>
-                            )}
-                          </div>
-                          <p className="mt-1.5 font-serif text-xs italic leading-relaxed text-slate-500">
-                            «{statute.verbatimSnippet}»
-                          </p>
-                          <a
-                            href={statute.sourceUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-1.5 inline-block text-[11px] text-blue-700 hover:underline"
-                          >
-                            Fonte ufficiale ↗
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
+      {/* Level 2 — Approfondimento Normativo & Analisi Comparata */}
+      {ragResponse && !loading && hasLevel2Content && extended && (
+        <section className="mx-auto max-w-2xl space-y-6 rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm">
+          <div>
+            <p className="text-xs font-medium tracking-wide text-slate-400">Livello 2</p>
+            <h2 className="mt-1 text-lg font-semibold text-slate-900">Approfondimento Normativo &amp; Analisi Comparata</h2>
+          </div>
+
+          {/* A. Relazione Storica & Contesto Sistemico */}
+          {hasHistoricalContext && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                📜 Relazione Storica &amp; Contesto Sistemico
+              </h3>
+              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-serif text-sm leading-relaxed text-slate-700">{extended.historicalContext}</p>
+              </div>
             </div>
           )}
 
-          {ragResponse.extendedAnalysis.comparativeTable.length > 0 && (
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <button
-                type="button"
-                onClick={() => setDeepGroundingOpen((v) => !v)}
-                className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-800"
-              >
-                <span>🔗 Impatto Quadro Normativo</span>
-                <span className="text-slate-400">{deepGroundingOpen ? '−' : '+'}</span>
-              </button>
-              {deepGroundingOpen && (
-                <ul className="mt-3 space-y-3">
-                  {ragResponse.extendedAnalysis.comparativeTable.map((impact, i) => (
-                    <li key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-medium text-slate-700">
-                        {impact.modifiedActCode} — {impact.targetArticle}{' '}
-                        <span className="font-mono text-[10px] uppercase text-slate-400">({impact.impactType})</span>
-                      </p>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        <p className="text-xs leading-relaxed text-slate-500">
-                          <span className="font-semibold text-slate-600">Prima: </span>
-                          {impact.previousRuleSummary}
-                        </p>
-                        <p className="text-xs leading-relaxed text-slate-700">
-                          <span className="font-semibold text-slate-600">Ora: </span>
-                          {impact.newEffectSummary}
-                        </p>
+          {/* B. Testi Storici Collegati (Recuperati da Normattiva) */}
+          {historicalStatutes.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                🏛️ Testi Storici Collegati (Recuperati da Normattiva)
+              </h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {historicalStatutes.map((statute, i) => (
+                  <HistoricalStatuteCard key={i} statute={statute} onOpen={openHistoricalDrawer} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* C. Impatto Novellazioni (Prima vs Dopo) */}
+          {comparativeTable.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">🔗 Impatto Novellazioni (Prima vs Dopo)</h3>
+              <ul className="mt-3 space-y-3">
+                {comparativeTable.map((impact, i) => (
+                  <li key={i} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-800">
+                      {impact.modifiedActCode}{' '}
+                      <span className="font-mono text-[10px] font-normal uppercase text-slate-400">
+                        — {impact.targetArticle} ({impact.impactType})
+                      </span>
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-700">🔴 Disciplina Previgente</p>
+                        <p className="mt-1 text-xs leading-relaxed text-rose-900">{impact.previousRuleSummary}</p>
                       </div>
-                      {impact.officialSourceUrl && (
-                        <a
-                          href={impact.officialSourceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 inline-block text-[11px] text-blue-700 hover:underline"
-                        >
-                          Fonte ufficiale ↗
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">🟢 Nuovo Assetto Normativo</p>
+                        <p className="mt-1 text-xs leading-relaxed text-emerald-900">{impact.newEffectSummary}</p>
+                      </div>
+                    </div>
+                    {impact.officialSourceUrl && (
+                      <a
+                        href={impact.officialSourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-block text-[11px] text-blue-700 hover:underline"
+                      >
+                        Fonte ufficiale ↗
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
-          {(ragResponse.extendedAnalysis.neutralTechnicalDossier.pros.length > 0 ||
-            ragResponse.extendedAnalysis.neutralTechnicalDossier.cons.length > 0) && (
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <button
-                type="button"
-                onClick={() => setNeutralBalanceOpen((v) => !v)}
-                className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-800"
-              >
-                <span>⚖️ Bilancio Istituzionale (Servizio Studi)</span>
-                <span className="text-slate-400">{neutralBalanceOpen ? '−' : '+'}</span>
-              </button>
-              {neutralBalanceOpen && (
-                <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-semibold text-emerald-700">Obiettivi dichiarati</p>
-                    <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-600">
-                      {ragResponse.extendedAnalysis.neutralTechnicalDossier.pros.map((pro, i) => (
-                        <li key={i} className="flex gap-1.5">
-                          <span className="text-emerald-500">＋</span>
-                          <span>{pro}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-rose-700">Vincoli e criticità</p>
-                    <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-600">
-                      {ragResponse.extendedAnalysis.neutralTechnicalDossier.cons.map((con, i) => (
-                        <li key={i} className="flex gap-1.5">
-                          <span className="text-rose-500">－</span>
-                          <span>{con}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+          {/* D. Bilancio Tecnico Istituzionale (Dossier Servizi Studi) */}
+          {hasDossier && dossier && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                ⚖️ Bilancio Tecnico Istituzionale (Dossier Servizi Studi)
+              </h3>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                  <p className="text-xs font-semibold text-emerald-700">🟢 Finalità ed Effetti Dichiarati</p>
+                  <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-700">
+                    {dossier.pros.map((pro, i) => (
+                      <li key={i} className="flex gap-1.5">
+                        <span className="text-emerald-500">＋</span>
+                        <span>{pro}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              )}
+                <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                  <p className="text-xs font-semibold text-amber-700">⚠️ Vincoli Procedurali e Rischi Attuativi</p>
+                  <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-700">
+                    {dossier.cons.map((con, i) => (
+                      <li key={i} className="flex gap-1.5">
+                        <span className="text-amber-500">－</span>
+                        <span>{con}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
         </section>
       )}
 
-      {activeCitation && <CitationDrawer citation={activeCitation} onClose={() => setActiveCitation(null)} />}
+      {activeDrawer && <VerbatimDrawer content={activeDrawer} onClose={closeDrawer} />}
     </>
   );
 }
