@@ -83,6 +83,26 @@ model NormImpact {
   @@index([articleId])
 }
 
+/// SUBPHASE 3.2 — semantic cache for `app/api/rag/route.ts`. Keyed on a
+/// normalized (`trim().toLowerCase()`) query string, optionally scoped to a
+/// single act, so an identical follow-up question is served from Postgres
+/// in well under 50ms and burns zero further Gemini tokens.
+model RagQueryCache {
+  id              String   @id @default(cuid())
+  normalizedQuery String   @unique
+  actId           String?
+  answer          String   @db.Text
+  citations       Json
+  deepGrounding   Json
+  neutralBalance  Json
+  hitCount        Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([normalizedQuery])
+  @@index([actId])
+}
+
 model VoteBreakdown {
   id         String @id @default(cuid())
   actId      String @unique
