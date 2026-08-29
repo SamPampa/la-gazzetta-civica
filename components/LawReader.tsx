@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Act, LawArticle, NormImpact } from '@/src/data/mockActs';
 import { actIdFromNormCode, collectNormImpacts, daysLate } from '@/src/data/mockActs';
 import { COPERTURA_LABELS, IMPACT_TYPE_LABELS, formatDateIT, impactTypeClass } from '@/lib/labels';
+import { VoteBreakdownChart, VoteBreakdownPending, type VoteBreakdownData } from '@/components/VoteBreakdownChart';
 
 type Level = 'cittadino' | 'approfondito' | 'giurista';
 
@@ -15,7 +16,7 @@ const LEVEL_OPTIONS: { id: Level; label: string }[] = [
 ];
 
 type Props = {
-  act: Act;
+  act: Act & { voteBreakdown?: VoteBreakdownData | null };
 };
 
 export function LawReader({ act }: Props) {
@@ -98,7 +99,11 @@ export function LawReader({ act }: Props) {
 
       <NormImpactSection act={act} />
 
-      <VoteMap />
+      {act.voteBreakdown ? (
+        <VoteBreakdownChart data={act.voteBreakdown} />
+      ) : (
+        <VoteBreakdownPending iterStatus={act.iterStatus} />
+      )}
 
       <section className="mt-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-slate-900">Apparato critico e vincoli strutturali</h2>
@@ -323,35 +328,3 @@ function ModifiedActLink({ code }: { code: string }) {
   );
 }
 
-function VoteMap() {
-  return (
-    <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-slate-900">🗳️ Come hanno votato i partiti</h2>
-      <p className="mt-1 text-sm text-slate-500">
-        Scrutinio aggregato d’aula (simulazione sull’ultimo passaggio disponibile).
-      </p>
-      <div className="mt-5 flex h-4 w-full overflow-hidden rounded-full">
-        <div className="h-full w-[58%] bg-emerald-500" title="Favorevoli 58%" />
-        <div className="h-full w-[35%] bg-red-400" title="Contrari 35%" />
-        <div className="h-full w-[7%] bg-slate-300" title="Astenuti 7%" />
-      </div>
-      <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-700">
-        <li className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-          Favorevoli <span className="font-semibold text-slate-900">58%</span>
-          <span className="text-slate-400">232 voti</span>
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-          Contrari <span className="font-semibold text-slate-900">35%</span>
-          <span className="text-slate-400">140 voti</span>
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-          Astenuti <span className="font-semibold text-slate-900">7%</span>
-          <span className="text-slate-400">28 voti</span>
-        </li>
-      </ul>
-    </section>
-  );
-}

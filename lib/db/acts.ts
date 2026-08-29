@@ -35,6 +35,10 @@ export type VoteBreakdownDTO = {
   pctFav: number;
   pctCont: number;
   pctAst: number;
+  totalVoters?: number;
+  chamber?: 'Camera' | 'Senato' | 'Bicamerale' | string;
+  voteDate?: string;
+  quorumNotice?: string;
 };
 
 /** Same shape the rest of the app already knows (`ArchiveExplorer`,
@@ -95,6 +99,133 @@ type DbArticleWithImpacts = Prisma.ArticleGetPayload<{ include: { impacts: true 
 type DbActWithRelations = Prisma.ActGetPayload<{
   include: { articles: { include: { impacts: true } }; votes: true };
 }>;
+type DbVoteBreakdown = NonNullable<DbActWithRelations['votes']>;
+
+/** Camera: 400 deputies, sitting quorum = majority of members (201).
+ * Senato: 200 elected senators, sitting quorum = 101. */
+const CAMERA_QUORUM = 201;
+const SENATO_QUORUM = 101;
+
+function seededRandom(seed: string): () => number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(h, 31) + seed.charCodeAt(i)) >>> 0;
+  }
+  return () => {
+    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
+    return h / 4294967296;
+  };
+}
+
+type ActVoteMeta = {
+  code: string;
+  iterStatus: string;
+  preamble: string;
+  date: string;
+};
+
+function inferChamber(act: Pick<ActVoteMeta, 'code' | 'iterStatus' | 'preamble'>): VoteBreakdownDTO['chamber'] {
+  const code = act.code.toLowerCase();
+  const preamble = act.preamble.toLowerCase();
+  if (
+    act.iterStatus === 'promulgata' ||
+    preamble.includes('camera dei deputati e il senato')
+  ) {
+    return 'Bicamerale';
+  }
+  if (
+    act.iterStatus === 'navetta_senato' ||
+    /\ba\.?s\.?\b/.test(code) ||
+    code.includes('senato')
+  ) {
+    return 'Senato';
+  }
+  return 'Camera';
+}
+
+function buildQuorumNotice(
+  chamber: VoteBreakdownDTO['chamber'],
+  favorevoli: number,
+  contrari: number,
+  totalVoters: number,
+): string {
+  const looksLikeCamera = chamber === 'Camera' || (chamber === 'Bicamerale' && totalVoters >= 250);
+  const threshold = looksLikeCamera ? CAMERA_QUORUM : SENATO_QUORUM;
+  const quorumOk = totalVoters >= threshold;
+  const passed = favorevoli > contrari;
+  const quorumBit = quorumOk ? 'Quorum costitutivo raggiunto' : 'Quorum costitutivo non raggiunto';
+  const outcome = passed
+    ? 'provvedimento approvato a maggioranza dei votanti'
+    : 'maggioranza dei votanti non raggiunta';
+  return `${quorumBit} · ${outcome}.`;
+}
+
+function toVoteBreakdownDTO(
+  act: ActVoteMeta,
+  votes: Pick<DbVoteBreakdown, 'favorevoli' | 'contrari' | 'astenuti' | 'pctFav' | 'pctCont' | 'pctAst'>,
+): VoteBreakdownDTO {
+  const totalVoters = votes.favorevoli + votes.contrari + votes.astenuti;
+  const chamber = inferChamber(act);
+  return {
+    favorevoli: votes.favorevoli,
+    contrari: votes.contrari,
+    astenuti: votes.astenuti,
+    pctFav: votes.pctFav,
+    pctCont: votes.pctCont,
+    pctAst: votes.pctAst,
+    totalVoters,
+    chamber,
+    voteDate: act.date,
+    quorumNotice: buildQuorumNotice(chamber, votes.favorevoli, votes.contrari, totalVoters),
+  };
+}
+
+/**
+ * Deterministic, plausible roll-call used only when the live `VoteBreakdown`
+ * row is missing *and* the act is past commission (mock catalog / fallback
+ * acts). Never invented for `in_commissione` — those stay `null` so the
+ * chart can hide without fabricating an Aula result.
+ */
+function synthesizeFallbackVotes(act: Act): VoteBreakdownDTO {
+  const rand = seededRandom(`vote:${act.id}`);
+  const favBias = 0.45 + (act.urgency / 100) * 0.25;
+  const pctAst = Math.round(2 + rand() * 8);
+  const remaining = 100 - pctAst;
+  const pctFav = Math.round(
+    remaining * Math.min(0.9, Math.max(0.35, favBias + (rand() - 0.5) * 0.1)),
+  );
+  const pctCont = Math.max(0, remaining - pctFav);
+
+  const chamber = inferChamber(act);
+  const totalVotanti = chamber === 'Senato' ? 200 : chamber === 'Camera' ? 400 : 600;
+  const favorevoli = Math.round((pctFav / 100) * totalVotanti);
+  const contrari = Math.round((pctCont / 100) * totalVotanti);
+  const astenuti = Math.round((pctAst / 100) * totalVotanti);
+  const totalVoters = favorevoli + contrari + astenuti;
+
+  return {
+    favorevoli,
+    contrari,
+    astenuti,
+    pctFav,
+    pctCont,
+    pctAst,
+    totalVoters,
+    chamber,
+    voteDate: act.date,
+    quorumNotice: buildQuorumNotice(chamber, favorevoli, contrari, totalVoters),
+  };
+}
+
+/** Attach a vote payload to mock/fallback acts so `/atti/[id]` can render
+ * the chart without a live `VoteBreakdown` row. Commission-stage acts stay
+ * `null` and the UI shows the pending state instead. */
+function attachVoteBreakdown(act: Act): ActWithRelations {
+  if (act.iterStatus === 'in_commissione') {
+    return { ...act, voteBreakdown: null };
+  }
+  return { ...act, voteBreakdown: synthesizeFallbackVotes(act) };
+}
 
 function mapArticle(article: DbArticleWithImpacts): LawArticle {
   // The current reader UI (`LawReader`) only ever renders one novella
@@ -159,16 +290,7 @@ function mapAct(act: DbActWithRelations): ActWithRelations {
     ministry: act.ministry,
     preamble: act.preamble,
     articles,
-    voteBreakdown: act.votes
-      ? {
-          favorevoli: act.votes.favorevoli,
-          contrari: act.votes.contrari,
-          astenuti: act.votes.astenuti,
-          pctFav: act.votes.pctFav,
-          pctCont: act.votes.pctCont,
-          pctAst: act.votes.pctAst,
-        }
-      : null,
+    voteBreakdown: act.votes ? toVoteBreakdownDTO(act, act.votes) : null,
   };
 }
 
@@ -286,19 +408,22 @@ export async function getActs(params: GetActsParams = {}): Promise<GetActsResult
 export async function getActById(id: string): Promise<ActWithRelations> {
   if (!isDatabaseConfigured()) {
     warnFallbackToMock('unconfigured');
-    return getMockActById(id);
+    return attachVoteBreakdown(getMockActById(id));
   }
 
   try {
     const act = await prisma.act.findUnique({
       where: { id },
+      // Always load the optional 1:1 `VoteBreakdown` so the act detail
+      // page can render `<VoteBreakdownChart />` (or the pending state
+      // when `votes` is still null — e.g. acts in commissione).
       include: { articles: { include: { impacts: true } }, votes: true },
     });
 
-    if (!act) return getMockActById(id);
+    if (!act) return attachVoteBreakdown(getMockActById(id));
     return mapAct(act);
   } catch (error) {
     warnFallbackToMock('error', error);
-    return getMockActById(id);
+    return attachVoteBreakdown(getMockActById(id));
   }
 }
