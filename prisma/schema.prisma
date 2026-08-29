@@ -34,9 +34,10 @@ model Act {
   decreesMissing  Int            @default(0)
   decreeDeadline  String?
   financialNote   String
-  omnibusRisk     Json? // { article: string, description: string }
-  lobbyCheck      Json? // { similarity: number, source: string }
-  urgency         Int            @default(50)
+  omnibusRisk       Json? // { article: string, description: string }
+  lobbyCheck        Json? // { similarity: number, source: string }
+  democraticBypass  Json? // { executiveDominanceScore, statusLevel, confidenceVotePlaced, summaryDescription }
+  urgency           Int            @default(50)
   ministry        String
   preamble        String
   createdAt       DateTime       @default(now())

@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useTransition } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { ActCard } from '@/components/ActCard';
 import {
   COPERTURA_LABELS,
@@ -8,93 +9,76 @@ import {
   ITER_LABELS,
   MATERIA_LABELS,
 } from '@/lib/labels';
-import {
-  MOCK_ACTS,
-  currentYear,
-  isRecentAct,
-  searchActs,
-  type Act,
-  type Copertura,
-  type Iniziativa,
-  type IterStatus,
-  type Materia,
-} from '@/src/data/mockActs';
+import type { ActSortKey, GetActsParams, GetActsResult, TimeRange } from '@/lib/archive';
 
-type SortKey = 'date' | 'urgency';
-type TimeRange = 'all' | 'recent' | 'historic';
 const ALL = 'all';
-const PAGE_SIZE = 6;
-
-const RECENT_WINDOW_LABEL = `Ultimi 5 anni (${currentYear() - 5} - ${currentYear()})`;
 
 type Props = {
-  /** Acts fetched server-side via `getActs()` (Supabase, falling back to
-   * the bundled mock catalog) - all search/filter/sort/pagination below
-   * still runs client-side against this list, unchanged from before this
-   * was wired to the DB. Defaults to the mock catalog directly so the
-   * component still renders sensibly if ever used without the prop. */
-  initialActs?: Act[];
+  result: GetActsResult;
+  filters: GetActsParams;
 };
 
-export function ArchiveExplorer({ initialActs = MOCK_ACTS }: Props) {
-  const [query, setQuery] = useState('');
-  const [submitted, setSubmitted] = useState('');
-  const [timeRange, setTimeRange] = useState<TimeRange>('recent');
-  const [iter, setIter] = useState<IterStatus | typeof ALL>(ALL);
-  const [iniziativa, setIniziativa] = useState<Iniziativa | typeof ALL>(ALL);
-  const [materia, setMateria] = useState<Materia | typeof ALL>(ALL);
-  const [copertura, setCopertura] = useState<Copertura | typeof ALL>(ALL);
-  const [sort, setSort] = useState<SortKey>('urgency');
-  const [page, setPage] = useState(1);
+export function ArchiveExplorer({ result, filters }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
 
-  const filtered = useMemo(() => {
-    const base = submitted.trim() ? searchActs(submitted, initialActs) : [...initialActs];
-    const list = base.filter((act) => {
-      if (timeRange === 'recent' && !isRecentAct(act)) return false;
-      if (timeRange === 'historic' && isRecentAct(act)) return false;
-      if (iter !== ALL && act.iterStatus !== iter) return false;
-      if (iniziativa !== ALL && act.iniziativa !== iniziativa) return false;
-      if (materia !== ALL && act.materia !== materia) return false;
-      if (copertura !== ALL && act.copertura !== copertura) return false;
-      return true;
+  const query = filters.query ?? '';
+  const timeRange: TimeRange = filters.timeRange ?? 'recent';
+  const iter = filters.iter ?? ALL;
+  const iniziativa = filters.iniziativa ?? ALL;
+  const materia = filters.materia ?? ALL;
+  const copertura = filters.copertura ?? ALL;
+  const sort: ActSortKey = filters.sort ?? 'urgency';
+  const page = result.page;
+  const year = new Date().getFullYear();
+  const recentWindowLabel = `Ultimi 5 anni (${year - 5} - ${year})`;
+
+  function navigate(patch: Record<string, string | undefined>, resetPage = true) {
+    const params = new URLSearchParams();
+    const next: Record<string, string | undefined> = {
+      q: query || undefined,
+      range: timeRange === 'recent' ? undefined : timeRange,
+      iter: iter === ALL ? undefined : iter,
+      iniziativa: iniziativa === ALL ? undefined : iniziativa,
+      materia: materia === ALL ? undefined : materia,
+      copertura: copertura === ALL ? undefined : copertura,
+      sort: sort === 'urgency' ? undefined : sort,
+      page: resetPage ? undefined : page > 1 ? String(page) : undefined,
+      ...patch,
+    };
+    if (resetPage) next.page = undefined;
+    for (const [key, value] of Object.entries(next)) {
+      if (value) params.set(key, value);
+    }
+    const href = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    startTransition(() => {
+      router.replace(href, { scroll: false });
     });
-    return [...list].sort((a, b) => {
-      if (sort === 'urgency') return b.urgency - a.urgency;
-      return b.date.localeCompare(a.date);
-    });
-  }, [submitted, timeRange, iter, iniziativa, materia, copertura, sort, initialActs]);
+  }
 
-  useEffect(() => {
-    setPage(1);
-  }, [submitted, timeRange, iter, iniziativa, materia, copertura, sort]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  const onSearch = (e: FormEvent) => {
+  const onSearch = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(query.trim());
+    const form = new FormData(e.currentTarget);
+    const q = String(form.get('q') ?? '').trim();
+    navigate({ q: q || undefined });
   };
 
   const reset = () => {
-    setQuery('');
-    setSubmitted('');
-    setTimeRange('recent');
-    setIter(ALL);
-    setIniziativa(ALL);
-    setMateria(ALL);
-    setCopertura(ALL);
+    startTransition(() => {
+      router.replace(pathname, { scroll: false });
+    });
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${pending ? 'opacity-70' : ''}`}>
       <form onSubmit={onSearch} className="relative">
         <input
           type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca per titolo, numero legge, articolo o materia (es. 285/1992, monopattini, IVA)"
+          name="q"
+          key={query}
+          defaultValue={query}
+          placeholder="Cerca per titolo, numero legge o materia (es. 285/1992, monopattini, IVA)"
           className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-4 pr-28 text-sm text-slate-900 outline-none ring-blue-600/15 placeholder:text-slate-400 focus:border-blue-400 focus:ring-4"
         />
         <button
@@ -106,16 +90,16 @@ export function ArchiveExplorer({ initialActs = MOCK_ACTS }: Props) {
       </form>
 
       <div className="flex flex-wrap gap-2">
-        <TimeChip label="Tutti gli atti" active={timeRange === 'all'} onClick={() => setTimeRange('all')} />
+        <TimeChip label="Tutti gli atti" active={timeRange === 'all'} onClick={() => navigate({ range: 'all' })} />
         <TimeChip
-          label={RECENT_WINDOW_LABEL}
+          label={recentWindowLabel}
           active={timeRange === 'recent'}
-          onClick={() => setTimeRange('recent')}
+          onClick={() => navigate({ range: undefined })}
         />
         <TimeChip
           label="Storico (> 5 anni)"
           active={timeRange === 'historic'}
-          onClick={() => setTimeRange('historic')}
+          onClick={() => navigate({ range: 'historic' })}
         />
       </div>
 
@@ -127,7 +111,7 @@ export function ArchiveExplorer({ initialActs = MOCK_ACTS }: Props) {
               Ordina
               <select
                 value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
+                onChange={(e) => navigate({ sort: e.target.value === 'date' ? 'date' : undefined })}
                 className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800"
               >
                 <option value="urgency">Urgenza attuativa</option>
@@ -147,64 +131,64 @@ export function ArchiveExplorer({ initialActs = MOCK_ACTS }: Props) {
           <FilterSelect
             label="Stato iter"
             value={iter}
-            onChange={(v) => setIter(v as IterStatus | typeof ALL)}
+            onChange={(v) => navigate({ iter: v === ALL ? undefined : v })}
             options={[{ value: ALL, label: 'Tutti' }, ...typedOptions(ITER_LABELS)]}
           />
           <FilterSelect
             label="Iniziativa"
             value={iniziativa}
-            onChange={(v) => setIniziativa(v as Iniziativa | typeof ALL)}
+            onChange={(v) => navigate({ iniziativa: v === ALL ? undefined : v })}
             options={[{ value: ALL, label: 'Tutte' }, ...typedOptions(INIZIATIVA_LABELS)]}
           />
           <FilterSelect
             label="Materia"
             value={materia}
-            onChange={(v) => setMateria(v as Materia | typeof ALL)}
+            onChange={(v) => navigate({ materia: v === ALL ? undefined : v })}
             options={[{ value: ALL, label: 'Tutte' }, ...typedOptions(MATERIA_LABELS)]}
           />
           <FilterSelect
             label="Copertura finanziaria"
             value={copertura}
-            onChange={(v) => setCopertura(v as Copertura | typeof ALL)}
+            onChange={(v) => navigate({ copertura: v === ALL ? undefined : v })}
             options={[{ value: ALL, label: 'Tutte' }, ...typedOptions(COPERTURA_LABELS)]}
           />
         </div>
       </div>
 
       <p className="text-sm text-slate-500">
-        {filtered.length} {filtered.length === 1 ? 'norma' : 'norme'} trovate
-        {submitted ? ` per «${submitted}»` : ''}
+        {result.total} {result.total === 1 ? 'norma' : 'norme'} trovate
+        {query ? ` per «${query}»` : ''}
       </p>
 
-      {filtered.length === 0 ? (
+      {result.total === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
           Nessun atto corrisponde a ricerca e filtri. Modifica i criteri o azzera.
         </div>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2">
-            {paged.map((act) => (
+            {result.items.map((act) => (
               <ActCard key={act.id} act={act} />
             ))}
           </div>
 
-          {totalPages > 1 && (
+          {result.totalPages > 1 && (
             <nav className="flex items-center justify-between gap-3 pt-2 text-sm">
               <button
                 type="button"
-                disabled={currentPage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                onClick={() => navigate({ page: page <= 2 ? undefined : String(page - 1) }, false)}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
               >
                 ← Precedente
               </button>
               <span className="text-xs text-slate-500">
-                Pagina {currentPage} di {totalPages}
+                Pagina {result.page} di {result.totalPages}
               </span>
               <button
                 type="button"
-                disabled={currentPage >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= result.totalPages}
+                onClick={() => navigate({ page: String(page + 1) }, false)}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
               >
                 Successiva →

@@ -1,6 +1,9 @@
 import type { Prisma } from '@prisma/client';
+import { calculateDelayDays } from '@/lib/dates';
 import { prisma } from '@/lib/db/prisma';
 import { MOCK_ACTS } from '@/src/data/mockActs';
+
+export { calculateDelayDays } from '@/lib/dates';
 
 export interface MinistryDelayStat {
   ministry: string;
@@ -32,6 +35,7 @@ export interface ObservatoryDashboardData {
     invarianzaFinancialPercentage: number;
     confidenceVoteRate: number;
     omnibusAlertsCount: number;
+    lobbyAlertsCount: number;
   };
   ministryLeaderboard: MinistryDelayStat[];
   coverageDistribution: FinancialCoverageStat[];
@@ -51,7 +55,6 @@ const COPERTURA_ORDER = ['a_debito', 'tagli_spesa', 'invarianza'] as const;
 type CoperturaKind = (typeof COPERTURA_ORDER)[number];
 
 const TOP_DELAYED_ACTS_LIMIT = 10;
-const MS_PER_DAY = 86_400_000;
 
 const observatoryActSelect = {
   id: true,
@@ -64,6 +67,8 @@ const observatoryActSelect = {
   decreesMissing: true,
   decreeDeadline: true,
   omnibusRisk: true,
+  lobbyCheck: true,
+  democraticBypass: true,
   urgency: true,
 } satisfies Prisma.ActSelect;
 
@@ -108,45 +113,27 @@ function asCopertura(value: string): CoperturaKind | null {
   return null;
 }
 
-function hasOmnibusAlert(value: Prisma.JsonValue | null): boolean {
+function hasJsonObject(value: Prisma.JsonValue | null): boolean {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function utcCalendarDay(date: Date): number {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+function hasOmnibusAlert(value: Prisma.JsonValue | null): boolean {
+  return hasJsonObject(value);
 }
 
-function parseDeadlineUtcDay(deadlineStr: string): number | null {
-  const trimmed = deadlineStr.trim();
-  if (!trimmed) return null;
-
-  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
-  if (iso) {
-    return Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-  }
-
-  const parsed = Date.parse(trimmed);
-  if (!Number.isFinite(parsed)) return null;
-  return utcCalendarDay(new Date(parsed));
+function hasLobbyAlert(value: Prisma.JsonValue | null): boolean {
+  if (!hasJsonObject(value)) return false;
+  const similarity = (value as { similarity?: unknown }).similarity;
+  return typeof similarity === 'number' && similarity >= 0.85;
 }
 
-/**
- * Calendar-day lateness of a decreto-attuativo deadline versus `referenceDate`
- * (default: now). Null or still-future deadlines return 0; a past deadline
- * returns the UTC date-only difference in days. Matches `daysLate` in
- * `src/data/mockActs.ts` so observatory KPIs stay consistent with ActCard.
- */
-export function calculateDelayDays(
-  deadlineStr: string | null,
-  referenceDate: Date = new Date(),
-): number {
-  if (!deadlineStr) return 0;
-  const deadlineUtc = parseDeadlineUtcDay(deadlineStr);
-  if (deadlineUtc === null) return 0;
+function hasBypassRecord(value: Prisma.JsonValue | null): boolean {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
 
-  const referenceUtc = utcCalendarDay(referenceDate);
-  if (deadlineUtc >= referenceUtc) return 0;
-  return Math.round((referenceUtc - deadlineUtc) / MS_PER_DAY);
+function isConfidenceVotePlaced(value: Prisma.JsonValue | null): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  return (value as { confidenceVotePlaced?: unknown }).confidenceVotePlaced === true;
 }
 
 function fromMockActs(): ObservatoryActRow[] {
@@ -161,6 +148,8 @@ function fromMockActs(): ObservatoryActRow[] {
     decreesMissing: act.decreesMissing,
     decreeDeadline: act.decreeDeadline,
     omnibusRisk: act.omnibusRisk,
+    lobbyCheck: act.lobbyCheck,
+    democraticBypass: act.democraticBypass ?? null,
     urgency: act.urgency,
   }));
 }
@@ -295,17 +284,18 @@ function buildSummary(
     .map((act) => calculateDelayDays(act.decreeDeadline, referenceDate));
 
   const invarianza = coverage.find((row) => row.copertura === 'invarianza');
+  const bypassRows = rows.filter((act) => hasBypassRecord(act.democraticBypass));
+  const fiduciaCount = bypassRows.filter((act) => isConfidenceVotePlaced(act.democraticBypass)).length;
 
   return {
     totalActsTracked: rows.length,
     totalMissingDecrees: rows.reduce((sum, act) => sum + act.decreesMissing, 0),
     overallAverageDelayDays: round1(mean(pendingDelays)),
     invarianzaFinancialPercentage: invarianza?.percentage ?? 0,
-    // Act has no questione-di-fiducia column. Returning 0 rather than
-    // inferring fiducia from decreto-legge classification (that would
-    // invent parliamentary procedure). Wire a real flag when ingested.
-    confidenceVoteRate: 0,
+    confidenceVoteRate:
+      bypassRows.length === 0 ? 0 : round1((fiduciaCount / bypassRows.length) * 100),
     omnibusAlertsCount: rows.filter((act) => hasOmnibusAlert(act.omnibusRisk)).length,
+    lobbyAlertsCount: rows.filter((act) => hasLobbyAlert(act.lobbyCheck)).length,
   };
 }
 

@@ -1,4 +1,4 @@
-name: Verifica Build Next.js
+name: Verifica build, tipi e test
 
 on:
   push:
@@ -17,11 +17,20 @@ jobs:
     - name: Configura Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 20
         cache: 'npm'
 
     - name: Installa le dipendenze
       run: npm install
 
-    - name: Esegui la compilazione del sito
+    - name: Genera il client Prisma
+      run: npx prisma generate
+
+    - name: Test algoritmi, metriche e rotte
+      run: npm test
+
+    - name: Typecheck
+      run: npx tsc --noEmit
+
+    - name: Compilazione Next.js
       run: npm run build

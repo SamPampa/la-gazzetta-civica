@@ -48,6 +48,12 @@ export type Act = {
   financialNote: string;
   omnibusRisk: { article: string; description: string } | null;
   lobbyCheck: { similarity: number; source: string } | null;
+  democraticBypass?: {
+    executiveDominanceScore: number;
+    statusLevel: 'ordinario' | 'accelerato' | 'bypass_elevato';
+    confidenceVotePlaced: boolean;
+    summaryDescription: string;
+  } | null;
   urgency: number;
   keywords: string[];
   ministry: string;
@@ -1141,30 +1147,6 @@ export const MOCK_ACTS: Act[] = [
   },
 ];
 
-export const MINISTRY_DELAYS = [
-  { ministry: 'MEF', pendingDecrees: 8, avgDaysLate: 142, acts: 3 },
-  { ministry: 'Salute', pendingDecrees: 5, avgDaysLate: 105, acts: 1 },
-  { ministry: 'Giustizia', pendingDecrees: 4, avgDaysLate: 120, acts: 1 },
-  { ministry: 'MIT', pendingDecrees: 3, avgDaysLate: 59, acts: 1 },
-  { ministry: 'Lavoro', pendingDecrees: 2, avgDaysLate: 8, acts: 1 },
-  { ministry: 'MASE', pendingDecrees: 1, avgDaysLate: 0, acts: 1 },
-];
-
-export const BYPASS_INDEX = {
-  fiduciaShare: 38,
-  historicalFiducia: 24,
-  aulaHoursCurrent: 6.5,
-  aulaHoursHistorical: 14.2,
-};
-
-export const OMNIBUS_RADAR = [
-  { label: 'Fisco / enti locali', score: 78 },
-  { label: 'Trasporti / concessioni', score: 71 },
-  { label: 'Lavoro / voucher', score: 54 },
-  { label: 'Delega tributaria / giochi', score: 49 },
-  { label: 'Sanità', score: 12 },
-];
-
 const ID_ALIASES: Record<string, string> = {
   'ddl-1435': 'legge-105-2026',
 };
@@ -1180,258 +1162,13 @@ export function isRecentAct(act: Act): boolean {
   return year >= currentYear() - RECENT_YEARS_WINDOW;
 }
 
-function seededRandom(seed: string): () => number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = (Math.imul(h, 31) + seed.charCodeAt(i)) >>> 0;
-  }
-  return () => {
-    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
-    return h / 4294967296;
-  };
+export function resolveActId(id: string): string {
+  return ID_ALIASES[id] ?? id;
 }
 
-function pick<T>(rand: () => number, arr: readonly T[]): T {
-  return arr[Math.floor(rand() * arr.length) % arr.length];
-}
-
-const MATERIA_KEYWORDS: Record<Materia, string[]> = {
-  codice_strada: ['strada', 'patente', 'veicol', 'circolazione', 'trasport', 'monopattin'],
-  fisco: ['fisc', 'iva', 'irpef', 'tribut', 'bilancio', 'tasse', 'iras', 'iva'],
-  sanita: ['sanit', 'salute', 'ospedal', 'ssn', 'farmac', 'attesa'],
-  lavoro: ['lavoro', 'contratt', 'sindac', 'occupazion', 'pension', 'somministrazion'],
-  giustizia: ['giustizia', 'penale', 'process', 'civile', 'tribunale', 'reat'],
-};
-
-function guessMateria(text: string, rand: () => number): Materia {
-  const lower = text.toLowerCase();
-  const materie = Object.keys(MATERIA_KEYWORDS) as Materia[];
-  for (const materia of materie) {
-    if (MATERIA_KEYWORDS[materia].some((kw) => lower.includes(kw))) return materia;
-  }
-  return pick(rand, materie);
-}
-
-type ActIdentity =
-  | { kind: 'dlgs' | 'dl' | 'legge'; number: string; year: number }
-  | { kind: 'ac' | 'ac-pop'; number: string }
-  | { kind: 'generic' };
-
-function parseActIdentity(rawId: string): ActIdentity {
-  const id = rawId.toLowerCase().trim();
-  let m: RegExpMatchArray | null;
-  if ((m = id.match(/^dlgs-(\d+)-(\d{4})$/))) return { kind: 'dlgs', number: m[1], year: Number(m[2]) };
-  if ((m = id.match(/^dl-(\d+)-(\d{4})$/))) return { kind: 'dl', number: m[1], year: Number(m[2]) };
-  if ((m = id.match(/^legge-(\d+)-(\d{4})$/))) return { kind: 'legge', number: m[1], year: Number(m[2]) };
-  if ((m = id.match(/^ac-pop-(\d+)$/))) return { kind: 'ac-pop', number: m[1] };
-  if ((m = id.match(/^(?:ddl-ac|ac)-(\d+)$/))) return { kind: 'ac', number: m[1] };
-  return { kind: 'generic' };
-}
-
-const MONTH_NAMES_IT = [
-  'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
-  'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre',
-];
-
-function isoDate(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-const MINISTRIES = [
-  'MEF — Economia e Finanze',
-  'Ministero della Salute',
-  'Ministero del Lavoro',
-  'Ministero della Giustizia',
-  'MIT — Infrastrutture e Trasporti',
-  'MASE — Ambiente e Sicurezza energetica',
-  'Ministero dell’Interno',
-];
-
-/**
- * Genera al volo una scheda formalmente completa per un identificativo o una
- * query non presenti nel corpus mockato, così che qualsiasi atto storico o
- * futuro resti sempre apribile e coerente con la struttura `Act`.
- */
-export function generateFallbackAct(rawIdOrQuery: string): Act {
-  const identity = parseActIdentity(rawIdOrQuery);
-  const rand = seededRandom(rawIdOrQuery.toLowerCase());
-  const materia = guessMateria(rawIdOrQuery, rand);
-  const ministry = pick(rand, MINISTRIES);
-
-  const month = Math.floor(rand() * 12) + 1;
-  const day = Math.floor(rand() * 27) + 1;
-
-  let year: number;
-  let code: string;
-  let formalTitle: string;
-  let id: string;
-
-  if (identity.kind === 'dlgs' || identity.kind === 'dl' || identity.kind === 'legge') {
-    year = identity.year;
-    const label = identity.kind === 'dlgs' ? 'D.Lgs.' : identity.kind === 'dl' ? 'DL' : 'L.';
-    code = `${label} ${identity.number}/${year}`;
-    const formalKind =
-      identity.kind === 'dlgs'
-        ? 'DECRETO LEGISLATIVO'
-        : identity.kind === 'dl'
-          ? 'DECRETO-LEGGE'
-          : 'LEGGE';
-    formalTitle = `${formalKind} ${day} ${MONTH_NAMES_IT[month - 1]} ${year}, n. ${identity.number}`;
-    id = `${identity.kind}-${identity.number}-${year}`;
-  } else if (identity.kind === 'ac' || identity.kind === 'ac-pop') {
-    year = currentYear();
-    code = identity.kind === 'ac-pop' ? `DDL AC POP ${identity.number}` : `DDL AC ${identity.number}`;
-    formalTitle =
-      identity.kind === 'ac-pop'
-        ? `Disegno di legge di iniziativa popolare A.C. POP ${identity.number}`
-        : `Disegno di legge A.C. ${identity.number}`;
-    id = identity.kind === 'ac-pop' ? `ac-pop-${identity.number}` : `ac-${identity.number}`;
-  } else {
-    year = currentYear() - Math.floor(rand() * 6);
-    const words = rawIdOrQuery
-      .replace(/[-_]+/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    const label = words.length
-      ? words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      : 'Atto normativo';
-    code = `ATTO ${label.toUpperCase()}`.slice(0, 40);
-    formalTitle = `Provvedimento normativo — ${label}`;
-    id = rawIdOrQuery.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'atto-generico';
-  }
-
-  const materiaLabel: Record<Materia, string> = {
-    codice_strada: 'della circolazione stradale',
-    fisco: 'fiscale e di finanza pubblica',
-    sanita: 'sanitaria e di assistenza',
-    lavoro: 'di lavoro e previdenza sociale',
-    giustizia: 'di giustizia e ordinamento',
-  };
-
-  const officialTitle = `Disposizioni in materia ${materiaLabel[materia]}, generate a partire dall’identificativo «${rawIdOrQuery}».`;
-  const popularTitle = `Atto ${code}`;
-  const isHistoric = year < currentYear() - RECENT_YEARS_WINDOW;
-  const iterStatus: IterStatus = identity.kind === 'ac' || identity.kind === 'ac-pop' ? pick(rand, ['in_commissione', 'in_aula', 'navetta_senato'] as const) : 'promulgata';
-  const iniziativa: Iniziativa = identity.kind === 'ac-pop' ? 'popolare' : identity.kind === 'ac' ? pick(rand, ['governo', 'parlamentare'] as const) : 'governo';
-  const copertura: Copertura = pick(rand, ['invarianza', 'a_debito', 'tagli_spesa'] as const);
-  const decreesMissing = iterStatus === 'promulgata' ? Math.floor(rand() * 3) : 0;
-  const decreeDeadline = decreesMissing > 0 ? isoDate(year, ((month + 5) % 12) + 1, 15) : null;
-
-  const financialNoteByCopertura: Record<Copertura, string> = {
-    invarianza: 'Clausola di invarianza finanziaria: l’attuazione avviene nell’ambito delle risorse ordinarie già disponibili.',
-    a_debito: `Oneri coperti mediante maggiore ricorso al mercato finanziario, secondo la relazione tecnica allegata al provvedimento.`,
-    tagli_spesa: 'Copertura tramite riduzione di autorizzazioni di spesa preesistenti, come da relazione tecnica.',
-  };
-
-  const heading1 = 'Finalità e oggetto';
-  const heading2 = 'Disposizioni attuative';
-  const heading3 = 'Copertura e disposizioni finali';
-
-  const foundationByMateria: Record<Materia, { code: string; article: string; previous: string }> = {
-    codice_strada: {
-      code: 'D.Lgs. 285/1992 (Codice della Strada)',
-      article: 'Disposizioni generali',
-      previous: 'La circolazione stradale resta disciplinata dal codice del 1992, salvo quanto qui novellato.',
-    },
-    fisco: {
-      code: 'D.P.R. 917/1986 (TUIR)',
-      article: 'Disposizioni tributarie di settore',
-      previous: 'Restano fermi gli obblighi dichiarativi e di versamento previsti dal TUIR e dalla legislazione fiscale vigente.',
-    },
-    sanita: {
-      code: 'L. 833/1978 (Istituzione del SSN)',
-      article: 'Livelli essenziali di assistenza',
-      previous: 'L’organizzazione sanitaria resta regionale, nei limiti dei LEA e della legislazione vigente.',
-    },
-    lavoro: {
-      code: 'D.Lgs. 81/2015',
-      article: 'Disciplina dei contratti di lavoro',
-      previous: 'I contratti di lavoro restano regolati dal d.lgs. 81/2015, salvo le modalità attuative qui demandate a decreto.',
-    },
-    giustizia: {
-      code: 'Codice di procedura civile',
-      article: 'Disposizioni processuali applicabili',
-      previous: 'Restano applicabili le forme processuali previgenti, in quanto compatibili.',
-    },
-  };
-  const foundation = foundationByMateria[materia];
-
-  const articles: LawArticle[] = [
-    {
-      number: '1',
-      heading: heading1,
-      original: `1. Il presente provvedimento reca disposizioni ${materiaLabel[materia]}, al fine di adeguare la normativa vigente alle esigenze emerse nel settore di riferimento.\n2. Le disposizioni del presente articolo si applicano su tutto il territorio nazionale, salva diversa previsione di legge.`,
-      structured: `Articolo di apertura: definisce l’oggetto (materia ${materiaLabel[materia]}) e l’ambito di applicazione nazionale del provvedimento ${code}.`,
-      simple: `Questo primo articolo spiega di cosa parla il provvedimento ${code}: regole ${materiaLabel[materia]}, valide in tutta Italia.`,
-    },
-    {
-      number: '2',
-      heading: heading2,
-      original: `1. Con decreto del Ministro competente, da adottare entro sessanta giorni dalla data di entrata in vigore del presente provvedimento, sono stabilite le modalità tecniche di attuazione delle disposizioni di cui all’articolo 1.\n2. Fino all’adozione del decreto di cui al comma 1, restano applicabili le disposizioni previgenti in quanto compatibili.`,
-      structured: `Rinvio a un decreto attuativo entro 60 giorni per le modalità tecniche. Clausola di ultrattività della disciplina previgente fino all’emanazione del decreto.`,
-      simple: `I dettagli pratici arrivano con un decreto entro due mesi. Finché non esce, valgono ancora le regole di prima (se compatibili).`,
-      impact: {
-        modifiedActCode: foundation.code,
-        targetArticle: foundation.article,
-        impactType: 'integrazione',
-        previousRuleSummary: foundation.previous,
-        newEffectSummary:
-          'Le modalità tecniche sono demandate a un decreto da adottare entro 60 giorni; fino ad allora restano applicabili le disposizioni previgenti in quanto compatibili.',
-        officialSourceUrl: 'https://www.normattiva.it/',
-      },
-    },
-    {
-      number: '3',
-      heading: heading3,
-      original: `1. Agli oneri derivanti dal presente provvedimento si provvede ai sensi della relazione tecnica allegata.\n2. Il presente provvedimento entra in vigore il giorno successivo a quello della sua pubblicazione nella Gazzetta Ufficiale.`,
-      structured: `Copertura finanziaria come da relazione tecnica (${COPERTURA_LABEL_INTERNAL[copertura]}). Entrata in vigore il giorno successivo alla pubblicazione.`,
-      simple: `Come si paga questo provvedimento è scritto nella relazione tecnica. Diventa legge il giorno dopo la pubblicazione in Gazzetta Ufficiale.`,
-    },
-  ];
-
-  return {
-    id,
-    code,
-    formalTitle,
-    officialTitle,
-    popularTitle,
-    summary: `Provvedimento generato automaticamente a partire dall’identificativo «${rawIdOrQuery}», in materia ${materiaLabel[materia]}.`,
-    date: isoDate(year, month, day),
-    publishedAt: iterStatus === 'promulgata' ? isoDate(year, month, day + 1) : null,
-    inForceAt: iterStatus === 'promulgata' ? isoDate(year, month, day + 15 > 28 ? 28 : day + 15) : null,
-    sourceUrl: 'https://www.normattiva.it/',
-    sourceLabel: isHistoric ? 'Gazzetta Ufficiale — testo su Normattiva' : 'Testo su Normattiva / LOD Camera',
-    iniziativa,
-    materia,
-    copertura,
-    iterStatus,
-    decreesMissing,
-    decreeDeadline,
-    financialNote: financialNoteByCopertura[copertura],
-    omnibusRisk: null,
-    lobbyCheck: null,
-    urgency: isHistoric ? Math.floor(rand() * 15) : Math.floor(rand() * 40) + 10,
-    keywords: [materia.replace('_', ' '), code.toLowerCase()],
-    ministry,
-    preamble:
-      identity.kind === 'ac' || identity.kind === 'ac-pop'
-        ? 'Onorevoli Colleghi! — Il presente disegno di legge è sottoposto all’esame del Parlamento nelle forme previste dal regolamento.'
-        : 'IL PRESIDENTE DELLA REPUBBLICA\nVisti gli articoli della Costituzione applicabili alla materia;\nEmana il seguente provvedimento:',
-    articles,
-  };
-}
-
-const COPERTURA_LABEL_INTERNAL: Record<Copertura, string> = {
-  invarianza: 'invarianza finanziaria',
-  a_debito: 'ricorso al mercato finanziario',
-  tagli_spesa: 'riduzione di spesa preesistente',
-};
-
-export function getActById(id: string): Act {
-  const resolved = ID_ALIASES[id] ?? id;
-  const found = MOCK_ACTS.find((act) => act.id === resolved);
-  return found ?? generateFallbackAct(id);
+export function getActById(id: string): Act | null {
+  const resolved = resolveActId(id);
+  return MOCK_ACTS.find((act) => act.id === resolved) ?? null;
 }
 
 export function collectNormImpacts(act: Act): { articleNumber: string; impact: NormImpact }[] {
@@ -1454,14 +1191,7 @@ export function actIdFromNormCode(code: string): string | null {
   return null;
 }
 
-export function daysLate(deadline: string | null): number {
-  if (!deadline) return 0;
-  const [y, m, d] = deadline.split('-').map(Number);
-  const end = Date.UTC(y, m - 1, d);
-  const now = new Date();
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  return Math.max(0, Math.round((today - end) / 86_400_000));
-}
+export { calculateDelayDays as daysLate } from '@/lib/dates';
 
 const SEARCH_STOPWORDS = new Set([
   'cosa',

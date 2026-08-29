@@ -72,6 +72,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { PDFParse } from 'pdf-parse';
 import { PrismaClient } from '@prisma/client';
+import { refreshActAudits } from '../lib/services/audit_enrichment';
 
 const execFileAsync = promisify(execFile);
 
@@ -711,6 +712,7 @@ async function main() {
         console.log(`  ${label} — SKIPPED (${outcome.reason})`);
       } else {
         await replaceActArticles(act.id, outcome.articles);
+        await refreshActAudits(prisma, act.id);
         if (outcome.promotedToPromulgata) {
           await markPromulgated(act.id, outcome.promotedToPromulgata);
           counters.promotedToPromulgata += 1;

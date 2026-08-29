@@ -13,6 +13,7 @@
  * Usage: npm run db:seed
  */
 import { PrismaClient } from '@prisma/client';
+import { refreshActAudits } from '../lib/services/audit_enrichment';
 import { MOCK_ACTS, type Act, type LawArticle } from '../src/data/mockActs';
 
 const prisma = new PrismaClient();
@@ -148,6 +149,8 @@ async function seedAct(act: Act) {
     update: vote,
     create: { actId: act.id, ...vote },
   });
+
+  await refreshActAudits(prisma, act.id);
 }
 
 async function main() {

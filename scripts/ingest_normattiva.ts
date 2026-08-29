@@ -56,6 +56,7 @@
  * Usage: npm run db:ingest:normattiva
  */
 import { PrismaClient } from '@prisma/client';
+import { refreshActAudits } from '../lib/services/audit_enrichment';
 import type { Copertura, ImpactType, Iniziativa, IterStatus, Materia } from '../src/data/mockActs';
 
 const prisma = new PrismaClient();
@@ -642,6 +643,8 @@ async function persistAct(act: NormalizedAct, counters: Counters): Promise<void>
     counters.articles += 1;
     counters.normImpacts += article.impacts.length;
   }
+
+  await refreshActAudits(prisma, act.id);
 }
 
 // ---------------------------------------------------------------------------

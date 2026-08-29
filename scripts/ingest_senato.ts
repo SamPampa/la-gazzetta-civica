@@ -36,6 +36,7 @@
  * Usage: npm run db:ingest:senato
  */
 import { PrismaClient } from '@prisma/client';
+import { refreshActAudits } from '../lib/services/audit_enrichment';
 import type { Copertura, ImpactType, Iniziativa, IterStatus, Materia } from '../src/data/mockActs';
 
 const prisma = new PrismaClient();
@@ -495,6 +496,8 @@ async function persistAct(act: NormalizedAct, counters: Counters): Promise<void>
     });
     counters.voteBreakdowns += 1;
   }
+
+  await refreshActAudits(prisma, act.id);
 }
 
 // ---------------------------------------------------------------------------

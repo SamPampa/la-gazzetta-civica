@@ -1,10 +1,12 @@
 import type { Prisma } from '@prisma/client';
+import { type ActListItem, type ActSortKey, type GetActsParams, type GetActsResult } from '@/lib/archive';
 import { prisma } from '@/lib/db/prisma';
 import {
   MOCK_ACTS,
   currentYear,
   getActById as getMockActById,
   isRecentAct,
+  resolveActId,
   searchActs,
   type Act,
   type Copertura,
@@ -15,18 +17,15 @@ import {
   type NormImpact,
 } from '@/src/data/mockActs';
 
-export type TimeRange = 'all' | 'recent' | 'historic';
-
-export type GetActsParams = {
-  page?: number;
-  pageSize?: number;
-  timeRange?: TimeRange;
-  query?: string;
-  iter?: IterStatus;
-  iniziativa?: Iniziativa;
-  materia?: Materia;
-  copertura?: Copertura;
-};
+export {
+  ARCHIVE_PAGE_SIZE,
+  parseArchiveSearchParams,
+  type ActListItem,
+  type ActSortKey,
+  type GetActsParams,
+  type GetActsResult,
+  type TimeRange,
+} from '@/lib/archive';
 
 export type VoteBreakdownDTO = {
   favorevoli: number;
@@ -41,22 +40,29 @@ export type VoteBreakdownDTO = {
   quorumNotice?: string;
 };
 
-/** Same shape the rest of the app already knows (`ArchiveExplorer`,
- * `ActCard`, `LawReader`), plus an optional `voteBreakdown` the DB can
- * supply once the UI is wired up to it - additive only, so every existing
- * consumer typed against `Act` keeps working untouched. */
 export type ActWithRelations = Act & { voteBreakdown?: VoteBreakdownDTO | null };
-
-export type GetActsResult = {
-  items: ActWithRelations[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-};
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 24;
+
+const LIST_SELECT = {
+  id: true,
+  code: true,
+  formalTitle: true,
+  officialTitle: true,
+  popularTitle: true,
+  date: true,
+  iniziativa: true,
+  materia: true,
+  copertura: true,
+  iterStatus: true,
+  decreesMissing: true,
+  decreeDeadline: true,
+  urgency: true,
+  ministry: true,
+} satisfies Prisma.ActSelect;
+
+type DbActListRow = Prisma.ActGetPayload<{ select: typeof LIST_SELECT }>;
 
 let warnedNoDatabase = false;
 let warnedConnectionFailure = false;
@@ -81,10 +87,6 @@ function warnFallbackToMock(reason: 'unconfigured' | 'error', error?: unknown) {
   }
 }
 
-/** Prisma's `Json?` columns come back as `Prisma.JsonValue`; the app-level
- * `Act` type expects the exact literal shape authored in mockActs.ts. Both
- * `omnibusRisk` and `lobbyCheck` are only ever written by our own seed
- * script/API, so a straight cast is safe here. */
 function asOmnibusRisk(value: Prisma.JsonValue | null): Act['omnibusRisk'] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as unknown as Act['omnibusRisk'];
@@ -95,27 +97,30 @@ function asLobbyCheck(value: Prisma.JsonValue | null): Act['lobbyCheck'] {
   return value as unknown as Act['lobbyCheck'];
 }
 
+function asDemocraticBypass(value: Prisma.JsonValue | null): NonNullable<Act['democraticBypass']> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.executiveDominanceScore !== 'number' || typeof row.summaryDescription !== 'string') {
+    return null;
+  }
+  const status = row.statusLevel;
+  if (status !== 'ordinario' && status !== 'accelerato' && status !== 'bypass_elevato') return null;
+  return {
+    executiveDominanceScore: row.executiveDominanceScore,
+    statusLevel: status,
+    confidenceVotePlaced: row.confidenceVotePlaced === true,
+    summaryDescription: row.summaryDescription,
+  };
+}
+
 type DbArticleWithImpacts = Prisma.ArticleGetPayload<{ include: { impacts: true } }>;
 type DbActWithRelations = Prisma.ActGetPayload<{
   include: { articles: { include: { impacts: true } }; votes: true };
 }>;
 type DbVoteBreakdown = NonNullable<DbActWithRelations['votes']>;
 
-/** Camera: 400 deputies, sitting quorum = majority of members (201).
- * Senato: 200 elected senators, sitting quorum = 101. */
 const CAMERA_QUORUM = 201;
 const SENATO_QUORUM = 101;
-
-function seededRandom(seed: string): () => number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = (Math.imul(h, 31) + seed.charCodeAt(i)) >>> 0;
-  }
-  return () => {
-    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
-    return h / 4294967296;
-  };
-}
 
 type ActVoteMeta = {
   code: string;
@@ -127,17 +132,10 @@ type ActVoteMeta = {
 function inferChamber(act: Pick<ActVoteMeta, 'code' | 'iterStatus' | 'preamble'>): VoteBreakdownDTO['chamber'] {
   const code = act.code.toLowerCase();
   const preamble = act.preamble.toLowerCase();
-  if (
-    act.iterStatus === 'promulgata' ||
-    preamble.includes('camera dei deputati e il senato')
-  ) {
+  if (act.iterStatus === 'promulgata' || preamble.includes('camera dei deputati e il senato')) {
     return 'Bicamerale';
   }
-  if (
-    act.iterStatus === 'navetta_senato' ||
-    /\ba\.?s\.?\b/.test(code) ||
-    code.includes('senato')
-  ) {
+  if (act.iterStatus === 'navetta_senato' || /\ba\.?s\.?\b/.test(code) || code.includes('senato')) {
     return 'Senato';
   }
   return 'Camera';
@@ -180,60 +178,7 @@ function toVoteBreakdownDTO(
   };
 }
 
-/**
- * Deterministic, plausible roll-call used only when the live `VoteBreakdown`
- * row is missing *and* the act is past commission (mock catalog / fallback
- * acts). Never invented for `in_commissione` — those stay `null` so the
- * chart can hide without fabricating an Aula result.
- */
-function synthesizeFallbackVotes(act: Act): VoteBreakdownDTO {
-  const rand = seededRandom(`vote:${act.id}`);
-  const favBias = 0.45 + (act.urgency / 100) * 0.25;
-  const pctAst = Math.round(2 + rand() * 8);
-  const remaining = 100 - pctAst;
-  const pctFav = Math.round(
-    remaining * Math.min(0.9, Math.max(0.35, favBias + (rand() - 0.5) * 0.1)),
-  );
-  const pctCont = Math.max(0, remaining - pctFav);
-
-  const chamber = inferChamber(act);
-  const totalVotanti = chamber === 'Senato' ? 200 : chamber === 'Camera' ? 400 : 600;
-  const favorevoli = Math.round((pctFav / 100) * totalVotanti);
-  const contrari = Math.round((pctCont / 100) * totalVotanti);
-  const astenuti = Math.round((pctAst / 100) * totalVotanti);
-  const totalVoters = favorevoli + contrari + astenuti;
-
-  return {
-    favorevoli,
-    contrari,
-    astenuti,
-    pctFav,
-    pctCont,
-    pctAst,
-    totalVoters,
-    chamber,
-    voteDate: act.date,
-    quorumNotice: buildQuorumNotice(chamber, favorevoli, contrari, totalVoters),
-  };
-}
-
-/** Attach a vote payload to mock/fallback acts so `/atti/[id]` can render
- * the chart without a live `VoteBreakdown` row. Commission-stage acts stay
- * `null` and the UI shows the pending state instead. */
-function attachVoteBreakdown(act: Act): ActWithRelations {
-  if (act.iterStatus === 'in_commissione') {
-    return { ...act, voteBreakdown: null };
-  }
-  return { ...act, voteBreakdown: synthesizeFallbackVotes(act) };
-}
-
 function mapArticle(article: DbArticleWithImpacts): LawArticle {
-  // The current reader UI (`LawReader`) only ever renders one novella
-  // callout per article, mirroring how every hand-authored mock article
-  // has at most one `impact`. The schema allows many `NormImpact` rows per
-  // article for future multi-novella articles, so we surface the first one
-  // here rather than dropping the relation's richer cardinality on the
-  // floor at the schema level.
   const [firstImpact] = article.impacts;
   const impact: NormImpact | undefined = firstImpact
     ? {
@@ -257,9 +202,7 @@ function mapArticle(article: DbArticleWithImpacts): LawArticle {
 }
 
 function mapAct(act: DbActWithRelations): ActWithRelations {
-  const articles = [...act.articles]
-    .sort((a, b) => a.orderIndex - b.orderIndex)
-    .map(mapArticle);
+  const articles = [...act.articles].sort((a, b) => a.orderIndex - b.orderIndex).map(mapArticle);
 
   return {
     id: act.id,
@@ -282,16 +225,39 @@ function mapAct(act: DbActWithRelations): ActWithRelations {
     financialNote: act.financialNote,
     omnibusRisk: asOmnibusRisk(act.omnibusRisk),
     lobbyCheck: asLobbyCheck(act.lobbyCheck),
+    democraticBypass: asDemocraticBypass(act.democraticBypass),
     urgency: act.urgency,
-    // Not modeled in the Postgres schema (see prisma/schema.prisma) - kept
-    // empty rather than omitted so DB-sourced acts still satisfy the `Act`
-    // type every component already imports.
     keywords: [],
     ministry: act.ministry,
     preamble: act.preamble,
     articles,
     voteBreakdown: act.votes ? toVoteBreakdownDTO(act, act.votes) : null,
   };
+}
+
+function toListItem(act: Pick<Act, keyof ActListItem> | DbActListRow): ActListItem {
+  return {
+    id: act.id,
+    code: act.code,
+    formalTitle: act.formalTitle,
+    officialTitle: act.officialTitle,
+    popularTitle: act.popularTitle,
+    date: act.date,
+    iniziativa: act.iniziativa as Iniziativa,
+    materia: act.materia as Materia,
+    copertura: act.copertura as Copertura,
+    iterStatus: act.iterStatus as IterStatus,
+    decreesMissing: act.decreesMissing,
+    decreeDeadline: act.decreeDeadline,
+    urgency: act.urgency,
+    ministry: act.ministry,
+  };
+}
+
+function sortActs<T extends { urgency: number; date: string }>(rows: T[], sort: ActSortKey): T[] {
+  return [...rows].sort((a, b) =>
+    sort === 'date' ? b.date.localeCompare(a.date) || b.urgency - a.urgency : b.urgency - a.urgency || b.date.localeCompare(a.date),
+  );
 }
 
 function matchesMockFilters(act: Act, params: GetActsParams): boolean {
@@ -305,24 +271,25 @@ function matchesMockFilters(act: Act, params: GetActsParams): boolean {
   return true;
 }
 
-/** Mirrors `getActs`'s contract exactly, but sourced from the in-memory
- * mock catalog - used both as the explicit "no DATABASE_URL" mode and as
- * the safety net when a configured Supabase connection is unreachable. */
 function getActsFromMock(params: GetActsParams): GetActsResult {
   const page = Math.max(1, params.page ?? DEFAULT_PAGE);
   const pageSize = Math.max(1, params.pageSize ?? DEFAULT_PAGE_SIZE);
+  const sort = params.sort ?? 'urgency';
 
   const query = params.query?.trim();
   const base = query ? searchActs(query) : [...MOCK_ACTS];
-  const filtered = base.filter((act) => matchesMockFilters(act, params));
-  const sorted = [...filtered].sort((a, b) => b.urgency - a.urgency || b.date.localeCompare(a.date));
+  const filtered = sortActs(
+    base.filter((act) => matchesMockFilters(act, params)),
+    sort,
+  );
 
-  const total = sorted.length;
+  const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const start = (Math.min(page, totalPages) - 1) * pageSize;
-  const items = sorted.slice(start, start + pageSize);
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * pageSize;
+  const items = filtered.slice(start, start + pageSize).map(toListItem);
 
-  return { items, total, page, pageSize, totalPages };
+  return { items, total, page: safePage, pageSize, totalPages };
 }
 
 function buildWhereClause(params: GetActsParams): Prisma.ActWhereInput {
@@ -335,9 +302,6 @@ function buildWhereClause(params: GetActsParams): Prisma.ActWhereInput {
 
   const timeRange = params.timeRange ?? 'all';
   if (timeRange !== 'all') {
-    // `date` is stored as an ISO `YYYY-MM-DD` string, so lexicographic
-    // comparison against another ISO string is a safe stand-in for a real
-    // date comparison - no need to cast the column to `date`/`timestamp`.
     const cutoff = `${currentYear() - 5}-01-01`;
     where.date = timeRange === 'recent' ? { gte: cutoff } : { lt: cutoff };
   }
@@ -356,12 +320,6 @@ function buildWhereClause(params: GetActsParams): Prisma.ActWhereInput {
   return where;
 }
 
-/**
- * Paginated, faceted act listing for `/atti`. Queries Supabase via Prisma
- * when `DATABASE_URL` is configured and reachable; otherwise (or on any
- * connection failure) transparently falls back to the bundled
- * `src/data/mockActs.ts` catalog so the archive page never hard-fails.
- */
 export async function getActs(params: GetActsParams = {}): Promise<GetActsResult> {
   if (!isDatabaseConfigured()) {
     warnFallbackToMock('unconfigured');
@@ -370,27 +328,31 @@ export async function getActs(params: GetActsParams = {}): Promise<GetActsResult
 
   const page = Math.max(1, params.page ?? DEFAULT_PAGE);
   const pageSize = Math.max(1, params.pageSize ?? DEFAULT_PAGE_SIZE);
+  const sort = params.sort ?? 'urgency';
 
   try {
     const where = buildWhereClause(params);
+    const orderBy: Prisma.ActOrderByWithRelationInput[] =
+      sort === 'date' ? [{ date: 'desc' }, { urgency: 'desc' }] : [{ urgency: 'desc' }, { date: 'desc' }];
 
-    const [rows, total] = await Promise.all([
-      prisma.act.findMany({
-        where,
-        include: { articles: { include: { impacts: true } }, votes: true },
-        orderBy: [{ urgency: 'desc' }, { date: 'desc' }],
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      prisma.act.count({ where }),
-    ]);
+    const total = await prisma.act.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(page, totalPages);
+
+    const rows = await prisma.act.findMany({
+      where,
+      select: LIST_SELECT,
+      orderBy,
+      skip: (safePage - 1) * pageSize,
+      take: pageSize,
+    });
 
     return {
-      items: rows.map(mapAct),
+      items: rows.map(toListItem),
       total,
-      page,
+      page: safePage,
       pageSize,
-      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      totalPages,
     };
   } catch (error) {
     warnFallbackToMock('error', error);
@@ -398,32 +360,35 @@ export async function getActs(params: GetActsParams = {}): Promise<GetActsResult
   }
 }
 
+function mockDetail(id: string): ActWithRelations | null {
+  const act = getMockActById(id);
+  if (!act) return null;
+  return { ...act, voteBreakdown: null };
+}
+
 /**
- * Single act with its full relational graph (articles, their norm
- * impacts, and the vote breakdown) for `/atti/[id]`. Falls back to
- * `src/data/mockActs.ts`'s `getActById` - which itself always resolves to
- * *some* act via `generateFallbackAct` - whenever the DB is unconfigured,
- * unreachable, or simply doesn't have this id yet.
+ * Full act graph for `/atti/[id]`. Returns `null` when the id is not in
+ * Supabase (or, if the DB is down, not in the bundled mock catalog).
+ * Never invents a law for an unknown identifier.
  */
-export async function getActById(id: string): Promise<ActWithRelations> {
+export async function getActById(id: string): Promise<ActWithRelations | null> {
+  const resolved = resolveActId(id);
+
   if (!isDatabaseConfigured()) {
     warnFallbackToMock('unconfigured');
-    return attachVoteBreakdown(getMockActById(id));
+    return mockDetail(resolved);
   }
 
   try {
-    const act = await prisma.act.findUnique({
-      where: { id },
-      // Always load the optional 1:1 `VoteBreakdown` so the act detail
-      // page can render `<VoteBreakdownChart />` (or the pending state
-      // when `votes` is still null — e.g. acts in commissione).
-      include: { articles: { include: { impacts: true } }, votes: true },
-    });
-
-    if (!act) return attachVoteBreakdown(getMockActById(id));
+    const include = { articles: { include: { impacts: true as const } }, votes: true as const };
+    let act = await prisma.act.findUnique({ where: { id: resolved }, include });
+    if (!act && resolved !== id) {
+      act = await prisma.act.findUnique({ where: { id }, include });
+    }
+    if (!act) return null;
     return mapAct(act);
   } catch (error) {
     warnFallbackToMock('error', error);
-    return attachVoteBreakdown(getMockActById(id));
+    return mockDetail(resolved);
   }
 }

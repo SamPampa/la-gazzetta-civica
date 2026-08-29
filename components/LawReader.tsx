@@ -160,8 +160,45 @@ export function LawReader({ act }: Props) {
             </p>
           </div>
         )}
+        {act.democraticBypass && (
+          <DemocraticBypassCard bypass={act.democraticBypass} />
+        )}
       </section>
     </article>
+  );
+}
+
+function DemocraticBypassCard({
+  bypass,
+}: {
+  bypass: NonNullable<Act['democraticBypass']>;
+}) {
+  const statusClass =
+    bypass.statusLevel === 'bypass_elevato'
+      ? 'border-rose-200 bg-rose-50 text-rose-950'
+      : bypass.statusLevel === 'accelerato'
+        ? 'border-amber-200 bg-amber-50 text-amber-950'
+        : 'border-slate-200 bg-slate-50 text-slate-900';
+  const statusLabel =
+    bypass.statusLevel === 'bypass_elevato'
+      ? 'Bypass elevato'
+      : bypass.statusLevel === 'accelerato'
+        ? 'Iter accelerato'
+        : 'Iter ordinario';
+
+  return (
+    <div className={`rounded-xl border p-4 text-sm ${statusClass}`}>
+      <p className="font-semibold">Indice di bypass democratico</p>
+      <p className="mt-1 font-mono text-xs">
+        {bypass.executiveDominanceScore} / 100 · {statusLabel}
+      </p>
+      <p className="mt-2 text-xs leading-relaxed">{bypass.summaryDescription}</p>
+      <p className="mt-2 text-[11px] leading-relaxed opacity-80">
+        {bypass.confidenceVotePlaced
+          ? 'Questione di fiducia registrata nei fatti d’Aula ingestiti.'
+          : 'Nessuna questione di fiducia ingestita: il punteggio usa solo l’urgenza dichiarata, senza inventare fiducia, ore d’Aula o ghigliottina.'}
+      </p>
+    </div>
   );
 }
 

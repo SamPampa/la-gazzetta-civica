@@ -3,9 +3,10 @@ import Link from 'next/link';
 import {
   getObservatoryMetrics,
   type FinancialCoverageStat,
+  type IterVelocityStat,
   type MinistryDelayStat,
 } from '@/lib/db/observatory';
-import { COPERTURA_LABELS } from '@/lib/labels';
+import { COPERTURA_LABELS, MATERIA_LABELS } from '@/lib/labels';
 
 export const metadata: Metadata = {
   title: 'Osservatorio & Analisi del Potere',
@@ -54,13 +55,13 @@ export default async function OsservatorioPage() {
           Osservatorio &amp; Analisi del Potere
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-          I totali sono estratti in tempo reale dal database degli atti e restano in cache al massimo
-          cinque minuti. Nessun indicatore è stimato a mano: ritardi, copertura finanziaria e allerte
-          omnibus derivano dai campi già registrati nel catalogo.
+          I totali sono estratti dal catalogo degli atti (cache al massimo cinque minuti). Ritardi,
+          copertura, allerte lobby/omnibus e tasso di fiducia derivano dai campi JSON scritti in
+          ingestione — mai da stime di dashboard legacy.
         </p>
       </header>
 
-      <section aria-label="Sintesi indicatori" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Sintesi indicatori" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Kpi
           label="Atti monitorati"
           value={formatIt(summary.totalActsTracked)}
@@ -79,7 +80,17 @@ export default async function OsservatorioPage() {
         <Kpi
           label="Allerte omnibus"
           value={formatIt(summary.omnibusAlertsCount)}
-          hint="Atti con deriva tematica già segnalata"
+          hint="Atti con deriva tematica persistita in ingestione"
+        />
+        <Kpi
+          label="Lobby check ≥ 85%"
+          value={formatIt(summary.lobbyAlertsCount)}
+          hint="Sovrapposizione testuale sopra soglia civica"
+        />
+        <Kpi
+          label="Questione di fiducia"
+          value={`${formatIt(summary.confidenceVoteRate, 1)}%`}
+          hint="Solo flag ingestiti, mai inferiti dal tipo di atto"
         />
       </section>
 
@@ -111,6 +122,23 @@ export default async function OsservatorioPage() {
           zero, copertura a debito, tagli di spesa.
         </p>
         <CoverageBar distribution={data.coverageDistribution} />
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <h2 className="font-serif text-xl font-semibold text-slate-900">Velocità d’iter per materia</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Urgenza media dichiarata e quota di atti già promulgati, raggruppati per materia del
+          catalogo. Non è un giudizio di merito.
+        </p>
+        {data.iterVelocity.length === 0 ? (
+          <p className="mt-5 text-sm text-slate-500">Nessuna materia da aggregare.</p>
+        ) : (
+          <ul className="mt-5 divide-y divide-slate-100">
+            {data.iterVelocity.map((row) => (
+              <IterVelocityRow key={row.materia} row={row} />
+            ))}
+          </ul>
+        )}
       </section>
 
       <section>
@@ -150,6 +178,34 @@ export default async function OsservatorioPage() {
         )}
       </section>
     </main>
+  );
+}
+
+function IterVelocityRow({ row }: { row: IterVelocityStat }) {
+  const label = row.materia in MATERIA_LABELS ? MATERIA_LABELS[row.materia as keyof typeof MATERIA_LABELS] : row.materia;
+  const total = row.promulgatedCount + row.inProgressCount;
+  const promulgatedShare = total === 0 ? 0 : (row.promulgatedCount / total) * 100;
+
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+      <div>
+        <p className="text-sm font-semibold text-slate-800">{label}</p>
+        <p className="font-mono text-[11px] text-slate-500">
+          urgenza media {formatIt(row.averageUrgency, 1)} / 100 · {formatIt(row.promulgatedCount)} promulgati ·{' '}
+          {formatIt(row.inProgressCount)} in corso
+        </p>
+      </div>
+      <div
+        className="h-2 w-28 overflow-hidden rounded-full bg-slate-100"
+        role="meter"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(promulgatedShare)}
+        aria-label={`${label}: ${formatIt(promulgatedShare, 0)}% promulgati`}
+      >
+        <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${promulgatedShare}%` }} />
+      </div>
+    </li>
   );
 }
 

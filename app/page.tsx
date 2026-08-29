@@ -10,7 +10,7 @@ import Link from 'next/link';
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const { items: weekly } = await getActs({ page: 1, pageSize: 3 });
+  const { items: weekly } = await getActs({ page: 1, pageSize: 3, timeRange: 'recent', sort: 'date' });
 
   return (
     <main className="space-y-16 pb-8">
@@ -27,9 +27,13 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {weekly.map((act) => (
-            <ActCard key={act.id} act={act} />
-          ))}
+          {weekly.length === 0 ? (
+            <p className="md:col-span-3 rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+              Nessun atto recente in catalogo. Apri l’archivio per l’indice completo.
+            </p>
+          ) : (
+            weekly.map((act) => <ActCard key={act.id} act={act} />)
+          )}
         </div>
       </section>
     </main>

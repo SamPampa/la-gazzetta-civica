@@ -13,10 +13,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const isActive = (href: string) => {
-    if (href === '/atti') return pathname === '/' || pathname.startsWith('/atti');
-    return pathname.startsWith(href);
-  };
+  const isActive = (href: string) => pathname === href || (href !== '/' && pathname.startsWith(href));
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">

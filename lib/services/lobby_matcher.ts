@@ -48,7 +48,7 @@ export type DetectLobbyMatchesOptions = {
   depositedMemos?: HearingMemo[];
 };
 
-/** Civic-alert threshold used by `OsservatorioDashboard` and `/trasparenza`. */
+/** Civic-alert threshold used by ingest enrichment and `/trasparenza`. */
 export const HIGH_SIMILARITY_THRESHOLD = 0.85;
 
 const JACCARD_WEIGHT = 0.6;

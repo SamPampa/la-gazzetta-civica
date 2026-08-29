@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import type { Act } from '@/src/data/mockActs';
+import type { ActListItem } from '@/lib/archive';
 import { daysLate } from '@/src/data/mockActs';
 import { ITER_LABELS, formatDateIT, iterBadgeClass } from '@/lib/labels';
 
 type Props = {
-  act: Act;
+  act: ActListItem;
 };
 
 export function ActCard({ act }: Props) {

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const SOURCES = [
   { href: 'https://dati.camera.it/sparql', label: 'Camera dei Deputati LOD SPARQL' },
   { href: 'https://www.senato.it/istituzione/open-data', label: 'Senato della Repubblica' },
@@ -16,6 +18,9 @@ export function Footer() {
           <span className="font-medium">Dati Ufficiali Connessi</span>
         </div>
         <nav className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600">
+          <Link href="/trasparenza" className="underline decoration-slate-300 underline-offset-4 hover:text-slate-900 hover:decoration-slate-500">
+            Metodologia e fonti
+          </Link>
           {SOURCES.map((source) => (
             <a
               key={source.href}
