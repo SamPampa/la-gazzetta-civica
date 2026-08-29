@@ -129,6 +129,7 @@ export function HomeAnswerEngine() {
   const [error, setError] = useState<string | null>(null);
   const [ragResponse, setRagResponse] = useState<RagResponse | null>(null);
   const [activeCitation, setActiveCitation] = useState<RagCitation | null>(null);
+  const [historicalContextOpen, setHistoricalContextOpen] = useState(true);
   const [deepGroundingOpen, setDeepGroundingOpen] = useState(true);
   const [neutralBalanceOpen, setNeutralBalanceOpen] = useState(true);
 
@@ -247,7 +248,57 @@ export function HomeAnswerEngine() {
             )}
           </div>
 
-          {ragResponse.deepGrounding.length > 0 && (
+          {(ragResponse.extendedAnalysis.historicalContext ||
+            ragResponse.extendedAnalysis.retrievedHistoricalStatutes.length > 0) && (
+            <div className="mt-6 border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setHistoricalContextOpen((v) => !v)}
+                className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-800"
+              >
+                <span>📜 Contesto Storico</span>
+                <span className="text-slate-400">{historicalContextOpen ? '−' : '+'}</span>
+              </button>
+              {historicalContextOpen && (
+                <div className="mt-3 space-y-3">
+                  {ragResponse.extendedAnalysis.historicalContext && (
+                    <p className="text-xs leading-relaxed text-slate-600">{ragResponse.extendedAnalysis.historicalContext}</p>
+                  )}
+                  {ragResponse.extendedAnalysis.retrievedHistoricalStatutes.length > 0 && (
+                    <ul className="space-y-2">
+                      {ragResponse.extendedAnalysis.retrievedHistoricalStatutes.map((statute, i) => (
+                        <li key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs font-medium text-slate-700">
+                              {statute.actCode} — {statute.officialTitle}, art. {statute.articleNumber}
+                            </p>
+                            {statute.isLocallyCached && (
+                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                                Archivio verificato
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1.5 font-serif text-xs italic leading-relaxed text-slate-500">
+                            «{statute.verbatimSnippet}»
+                          </p>
+                          <a
+                            href={statute.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1.5 inline-block text-[11px] text-blue-700 hover:underline"
+                          >
+                            Fonte ufficiale ↗
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {ragResponse.extendedAnalysis.comparativeTable.length > 0 && (
             <div className="mt-6 border-t border-slate-100 pt-4">
               <button
                 type="button"
@@ -259,7 +310,7 @@ export function HomeAnswerEngine() {
               </button>
               {deepGroundingOpen && (
                 <ul className="mt-3 space-y-3">
-                  {ragResponse.deepGrounding.map((impact, i) => (
+                  {ragResponse.extendedAnalysis.comparativeTable.map((impact, i) => (
                     <li key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-medium text-slate-700">
                         {impact.modifiedActCode} — {impact.targetArticle}{' '}
@@ -292,7 +343,8 @@ export function HomeAnswerEngine() {
             </div>
           )}
 
-          {(ragResponse.neutralBalance.pros.length > 0 || ragResponse.neutralBalance.cons.length > 0) && (
+          {(ragResponse.extendedAnalysis.neutralTechnicalDossier.pros.length > 0 ||
+            ragResponse.extendedAnalysis.neutralTechnicalDossier.cons.length > 0) && (
             <div className="mt-6 border-t border-slate-100 pt-4">
               <button
                 type="button"
@@ -307,7 +359,7 @@ export function HomeAnswerEngine() {
                   <div>
                     <p className="text-xs font-semibold text-emerald-700">Obiettivi dichiarati</p>
                     <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-600">
-                      {ragResponse.neutralBalance.pros.map((pro, i) => (
+                      {ragResponse.extendedAnalysis.neutralTechnicalDossier.pros.map((pro, i) => (
                         <li key={i} className="flex gap-1.5">
                           <span className="text-emerald-500">＋</span>
                           <span>{pro}</span>
@@ -318,7 +370,7 @@ export function HomeAnswerEngine() {
                   <div>
                     <p className="text-xs font-semibold text-rose-700">Vincoli e criticità</p>
                     <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-600">
-                      {ragResponse.neutralBalance.cons.map((con, i) => (
+                      {ragResponse.extendedAnalysis.neutralTechnicalDossier.cons.map((con, i) => (
                         <li key={i} className="flex gap-1.5">
                           <span className="text-rose-500">－</span>
                           <span>{con}</span>

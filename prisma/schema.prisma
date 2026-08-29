@@ -83,21 +83,23 @@ model NormImpact {
   @@index([articleId])
 }
 
-/// SUBPHASE 3.2 — semantic cache for `app/api/rag/route.ts`. Keyed on a
-/// normalized (`trim().toLowerCase()`) query string, optionally scoped to a
-/// single act, so an identical follow-up question is served from Postgres
-/// in well under 50ms and burns zero further Gemini tokens.
+/// PHASE 3 — semantic cache for `app/api/rag/route.ts`. Keyed on a
+/// normalized (`trim().toLowerCase()`, plus `::actId` when scoped) query
+/// string, so an identical follow-up question is served from Postgres in
+/// well under 50ms and burns zero further Gemini tokens. `extendedAnalysis`
+/// stores the full Stage 2 payload (`ExtendedHistoricalAnalysis` from
+/// `lib/types/rag.ts`: historical narrative, resolved foundation statutes,
+/// comparative table, neutral dossier) as a single JSON blob.
 model RagQueryCache {
-  id              String   @id @default(cuid())
-  normalizedQuery String   @unique
-  actId           String?
-  answer          String   @db.Text
-  citations       Json
-  deepGrounding   Json
-  neutralBalance  Json
-  hitCount        Int      @default(1)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(cuid())
+  normalizedQuery  String   @unique
+  actId            String?
+  answer           String   @db.Text
+  citations        Json
+  extendedAnalysis Json
+  hitCount         Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([normalizedQuery])
   @@index([actId])
