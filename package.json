@@ -20,6 +20,7 @@
     "db:ingest:dagl": "tsx scripts/ingest_dagl.ts",
     "db:enrich:ai": "tsx scripts/enrich_acts_ai.ts",
     "db:enrich:audits": "tsx scripts/enrich_audits.ts",
+    "db:harvest": "tsx scripts/etl/parliament_harvester.ts",
     "db:fetch:fulltexts": "tsx scripts/fetch_full_legislative_texts.ts",
     "db:ingest:all": "tsx scripts/ingest_parliament.ts && tsx scripts/ingest_senato.ts && tsx scripts/ingest_normattiva.ts && tsx scripts/ingest_dagl.ts"
   },

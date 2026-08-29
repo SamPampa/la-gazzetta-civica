@@ -4,7 +4,8 @@
  *
  * Called from ingest/seed after articles exist — never at HTTP request time.
  * Missing parliamentary facts (fiducia, ore d'Aula, ghigliottina) are not
- * invented: bypass uses only `actCode` + declared `urgency`.
+ * invented: bypass uses `actCode` + declared `urgency`, plus optional Aula
+ * facts only when the caller actually observed them.
  */
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { computeDemocraticBypass, type DemocraticBypassStatus } from './democratic_bypass';
@@ -17,6 +18,14 @@ export type AuditArticle = {
   original: string;
 };
 
+export type AulaFacts = {
+  isConfidenceVote?: boolean;
+  confidenceVoteChamber?: 'Camera' | 'Senato' | 'Entrambe';
+  actualDebateHours?: number;
+  amendmentsPresented?: number;
+  amendmentsGuillotined?: number;
+};
+
 export type AuditInput = {
   id: string;
   code: string;
@@ -24,6 +33,7 @@ export type AuditInput = {
   preamble: string;
   urgency: number;
   articles: AuditArticle[];
+  aula?: AulaFacts;
 };
 
 export type LobbyCheckStored = {
@@ -80,6 +90,11 @@ export async function computeActAudits(input: AuditInput): Promise<ActAuditPaylo
   const bypass = computeDemocraticBypass({
     actCode: input.code,
     decreeUrgencyLevel: input.urgency,
+    isConfidenceVote: input.aula?.isConfidenceVote,
+    confidenceVoteChamber: input.aula?.confidenceVoteChamber,
+    actualDebateHours: input.aula?.actualDebateHours,
+    amendmentsPresented: input.aula?.amendmentsPresented,
+    amendmentsGuillotined: input.aula?.amendmentsGuillotined,
   });
 
   return {
@@ -103,7 +118,11 @@ export function auditUpdateData(payload: ActAuditPayload): Prisma.ActUpdateInput
 }
 
 /** Recompute and persist audits for an act already stored with its articles. */
-export async function refreshActAudits(db: PrismaClient, actId: string): Promise<ActAuditPayload | null> {
+export async function refreshActAudits(
+  db: PrismaClient,
+  actId: string,
+  aula?: AulaFacts,
+): Promise<ActAuditPayload | null> {
   const act = await db.act.findUnique({
     where: { id: actId },
     select: {
@@ -124,6 +143,7 @@ export async function refreshActAudits(db: PrismaClient, actId: string): Promise
     preamble: act.preamble,
     urgency: act.urgency,
     articles: act.articles,
+    aula,
   });
 
   await db.act.update({
