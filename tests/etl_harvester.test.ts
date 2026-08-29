@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  addDaysIso,
+  dateSlices,
   detectConfidenceVoteMention,
   extractCrossChamberCodes,
   isoFromSyndicationDate,
   isoFromYyyymmdd,
+  isIsoInClosedRange,
   isOnOrAfterIso,
   lookbackCutoff,
+  monthProgress,
   parseSyndicationItems,
   toIsoDate,
 } from '../scripts/etl/harvest_utils';
@@ -55,5 +59,22 @@ describe('RSS / Atom parser', () => {
     assert.match(items[0].title, /A\.S\. 2100/);
     assert.equal(isoFromSyndicationDate(items[0].pubDate), '2026-08-28');
     assert.deepEqual(parseSyndicationItems('<html><body>captcha</body></html>'), []);
+  });
+});
+
+describe('2-year backfill slices', () => {
+  it('covers 2024-08-01 → 2026-08-29 in 60-day windows without gaps', () => {
+    const slices = dateSlices('2024-08-01', '2026-08-29', 60);
+    assert.equal(slices[0].startIso, '2024-08-01');
+    assert.equal(slices[0].endIso, '2024-09-29');
+    assert.equal(slices[0].startYmd, '20240801');
+    assert.equal(slices.at(-1)?.endIso, '2026-08-29');
+    assert.equal(slices.at(-1)?.total, slices.length);
+    assert.equal(addDaysIso(slices[0].endIso, 1), slices[1].startIso);
+    assert.equal(isIsoInClosedRange('2024-08-01', '2024-08-01', '2024-09-29'), true);
+    assert.equal(isIsoInClosedRange('2024-09-30', '2024-08-01', '2024-09-29'), false);
+    const progress = monthProgress('2024-08-15', '2024-08-01', '2026-08-29');
+    assert.equal(progress.month, 1);
+    assert.equal(progress.total, 25);
   });
 });

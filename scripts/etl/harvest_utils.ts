@@ -124,3 +124,87 @@ export function isoFromSyndicationDate(raw: string | null): string | null {
   if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
   return null;
 }
+
+export const BACKFILL_START_ISO = '2024-08-01';
+export const SLICE_DAYS = 60;
+
+export type HarvestRange = {
+  startIso: string;
+  endIso: string;
+  startYmd: string;
+  endYmd: string;
+};
+
+export type DateSlice = HarvestRange & {
+  index: number;
+  total: number;
+};
+
+export function toYyyymmdd(iso: string): string {
+  return iso.replace(/-/g, '');
+}
+
+export function harvestRange(startIso: string, endIso: string): HarvestRange {
+  return { startIso, endIso, startYmd: toYyyymmdd(startIso), endYmd: toYyyymmdd(endIso) };
+}
+
+export function todayIso(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/** Inclusive calendar add in UTC so DST does not skip a civil day. */
+export function addDaysIso(iso: string, days: number): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + days));
+  return next.toISOString().slice(0, 10);
+}
+
+export function isIsoInClosedRange(
+  value: string | null | undefined,
+  startIso: string,
+  endIso: string,
+): boolean {
+  if (!value) return false;
+  const iso = value.length === 8 && /^\d{8}$/.test(value) ? isoFromYyyymmdd(value) : value.slice(0, 10);
+  return !!iso && iso >= startIso && iso <= endIso;
+}
+
+/** Inclusive 60-day (default) windows covering `[startIso, endIso]`. */
+export function dateSlices(startIso: string, endIso: string, sliceDays = SLICE_DAYS): DateSlice[] {
+  if (sliceDays < 1) throw new Error('sliceDays must be >= 1');
+  if (endIso < startIso) return [];
+  const partial: Omit<DateSlice, 'total'>[] = [];
+  let cursor = startIso;
+  let index = 1;
+  while (cursor <= endIso) {
+    const rawEnd = addDaysIso(cursor, sliceDays - 1);
+    const end = rawEnd < endIso ? rawEnd : endIso;
+    partial.push({
+      index,
+      startIso: cursor,
+      endIso: end,
+      startYmd: toYyyymmdd(cursor),
+      endYmd: toYyyymmdd(end),
+    });
+    cursor = addDaysIso(end, 1);
+    index += 1;
+  }
+  return partial.map((slice) => ({ ...slice, total: partial.length }));
+}
+
+export function monthsInclusive(startIso: string, endIso: string): number {
+  const [startYear, startMonth] = startIso.split('-').map(Number);
+  const [endYear, endMonth] = endIso.split('-').map(Number);
+  return (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
+}
+
+/** 1-based calendar-month index of `iso` inside the backfill window. */
+export function monthProgress(
+  iso: string,
+  windowStartIso: string,
+  windowEndIso: string,
+): { month: number; total: number } {
+  const total = Math.max(1, monthsInclusive(windowStartIso, windowEndIso));
+  const month = Math.min(total, Math.max(1, monthsInclusive(windowStartIso, iso)));
+  return { month, total };
+}
