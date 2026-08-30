@@ -21,6 +21,7 @@
     "db:enrich:ai": "tsx scripts/enrich_acts_ai.ts",
     "db:enrich:audits": "tsx scripts/enrich_audits.ts",
     "db:check:enrichment": "tsx scripts/check_enrichment_status.ts",
+    "db:status": "tsx scripts/check_ai_status.ts",
     "db:harvest": "tsx scripts/etl/parliament_harvester.ts",
     "db:backfill:2years": "tsx scripts/etl/backfill_2years.ts",
     "db:fetch:fulltexts": "tsx scripts/fetch_full_legislative_texts.ts",
