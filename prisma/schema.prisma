@@ -106,6 +106,29 @@ model RagQueryCache {
   @@index([actId])
 }
 
+/// PHASE 4 — durable Supabase-backed cache for `lib/services/normattiva_resolver.ts`'s
+/// on-demand live resolutions. The resolver's in-memory `Map` only survives
+/// for the lifetime of one process (useless across serverless invocations),
+/// so every statute successfully fetched live from Normattiva is also
+/// persisted here — keyed on a normalized actCode+article pair — so the next
+/// lookup (any request, any cold start) is served straight from Postgres
+/// instead of re-hitting the external portal. Only ever written for a real
+/// verbatim fetch, never for a "servizio non disponibile" notice.
+model NormResolverCache {
+  id            String   @id @default(cuid())
+  cacheKey      String   @unique
+  actCode       String
+  articleNumber String
+  officialTitle String
+  popularTitle  String?
+  verbatimText  String   @db.Text
+  sourceUrl     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([actCode])
+}
+
 model VoteBreakdown {
   id         String @id @default(cuid())
   actId      String @unique

@@ -23,6 +23,7 @@ type DrawerContent = {
   verbatim: string;
   sourceUrl?: string;
   actId?: string;
+  isExternallyResolved?: boolean;
 };
 
 /** Splits a synthesized answer on `[1]`, `[2]`, ... markers and renders each
@@ -98,6 +99,11 @@ function VerbatimDrawer({ content, onClose }: { content: DrawerContent; onClose:
           <div>
             <h3 className="text-lg font-semibold text-slate-900">{content.title}</h3>
             <p className="mt-0.5 text-sm leading-snug text-slate-500">{content.subtitle}</p>
+            {content.isExternallyResolved && (
+              <span className="mt-1.5 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                Recuperato in tempo reale da Normattiva
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -151,10 +157,18 @@ function HistoricalStatuteCard({
         </div>
         <span
           className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-            statute.isLocallyCached ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+            statute.isUnavailableNotice
+              ? 'bg-amber-50 text-amber-700'
+              : statute.isLocallyCached
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-blue-50 text-blue-700'
           }`}
         >
-          {statute.isLocallyCached ? 'Archivio Storico Locale' : 'Recuperato da Normattiva'}
+          {statute.isUnavailableNotice
+            ? 'Fonte ufficiale (recupero in corso)'
+            : statute.isLocallyCached
+              ? 'Archivio Storico Locale'
+              : 'Recuperato da Normattiva'}
         </span>
       </div>
       <p className="mt-2 text-xs leading-relaxed text-slate-600">{statute.officialTitle}</p>
@@ -198,6 +212,7 @@ export function HomeAnswerEngine() {
       verbatim: citation.snippetVerbatim,
       sourceUrl: citation.officialSourceUrl,
       actId: citation.actId,
+      isExternallyResolved: citation.isExternallyResolved,
     });
   }
 

@@ -27,13 +27,28 @@
  * on-demand network service — Normattiva can genuinely time out or throttle
  * a request. In that case (and only when the act's identity itself is
  * actually known, see `buildInstitutionalFallback`) this resolver returns a
- * clearly-labelled "service temporarily unavailable" notice rather than
- * silently failing, per requirement #2.3 — it never fabricates legal text.
+ * clearly-labelled "service temporarily unavailable" notice — flagged via
+ * `isUnavailableNotice: true` so callers never mistake it for real verbatim
+ * text — rather than silently failing or fabricating legal content.
+ *
+ * PHASE 4 additions:
+ *   - A durable, Supabase-backed cache (`NormResolverCache`) sits between the
+ *     local `Act`/`Article` check and the live network fetch: the resolver's
+ *     module-level `Map` only survives one warm process, which is close to
+ *     useless on serverless — so every genuine live fetch is also persisted
+ *     to Postgres, and read back first on the next lookup, any process.
+ *   - `searchNormattivaByKeyword` resolves by free-text subject/keyword
+ *     against Normattiva's own OpenData search index (`ricerca/semplice`,
+ *     the same real endpoint `scripts/ingest_normattiva.ts` uses) rather
+ *     than requiring a precisely-known `actCode`/URN up front — the router
+ *     of last resort when neither the local corpus nor a guessed act code
+ *     covers the topic a citizen actually asked about.
  */
 import { prisma } from '@/lib/db/prisma';
 import { LEGAL_THEMATIC_DOMAINS } from '@/lib/taxonomy/legalThesaurus';
 
 const NORMATTIVA_TIMEOUT_MS = 9000;
+const NORMATTIVA_OPENDATA_API = 'https://api.normattiva.it/t/normattiva.api/bff-opendata/v1';
 const PLACEHOLDER_PATTERN = /non\s+(?:ancora\s+)?(?:[eè]\s+stato\s+)?acquisit[oi]/i;
 
 // ---------------------------------------------------------------------------
@@ -48,6 +63,11 @@ export interface ResolvedHistoricalAct {
   verbatimText: string;
   sourceUrl: string;
   isLocallyCached: boolean;
+  /** True only for the clearly-labelled "servizio non disponibile" notice
+   * built by `buildInstitutionalFallback` — `verbatimText` is NOT real
+   * normative text in that case, so callers must never quote it as a
+   * citation, only use it to point the user at the official source. */
+  isUnavailableNotice: boolean;
 }
 
 export interface ResolveNormOptions {
@@ -80,41 +100,103 @@ function cacheKey(actCode: string, articleNumber?: string): string {
 // ---------------------------------------------------------------------------
 
 async function resolveFromDatabase(actCode: string, articleNumber?: string): Promise<ResolvedHistoricalAct | null> {
-  const normalizedTarget = normalizeActCode(actCode);
+  try {
+    const normalizedTarget = normalizeActCode(actCode);
 
-  let act = await prisma.act.findUnique({ where: { code: actCode } });
-  if (!act) {
-    // Codes in the DB may be formatted slightly differently than the exact
-    // string a caller passes in (e.g. "D.Lgs. 285/1992" vs "DLgs 285/1992"),
-    // so fall back to a normalized scan across the (small, ~136-row) table.
-    const candidates = await prisma.act.findMany({ select: { id: true, code: true } });
-    const match = candidates.find((candidate) => normalizeActCode(candidate.code) === normalizedTarget);
-    if (match) act = await prisma.act.findUnique({ where: { id: match.id } });
+    let act = await prisma.act.findUnique({ where: { code: actCode } });
+    if (!act) {
+      // Codes in the DB may be formatted slightly differently than the exact
+      // string a caller passes in (e.g. "D.Lgs. 285/1992" vs "DLgs 285/1992"),
+      // so fall back to a normalized scan across the (small, ~136-row) table.
+      const candidates = await prisma.act.findMany({ select: { id: true, code: true } });
+      const match = candidates.find((candidate) => normalizeActCode(candidate.code) === normalizedTarget);
+      if (match) act = await prisma.act.findUnique({ where: { id: match.id } });
+    }
+    if (!act) return null;
+
+    const articles = await prisma.article.findMany({ where: { actId: act.id }, orderBy: { orderIndex: 'asc' } });
+    if (articles.length === 0) return null;
+
+    const article = articleNumber
+      ? articles.find((candidate) => normalizeArticleToken(candidate.number) === normalizeArticleToken(articleNumber))
+      : articles[0];
+    if (!article) return null;
+
+    // A placeholder row (ingestion honesty-note text) is not real verbatim
+    // text — treat it as a local miss so step 2 can still try to fetch the
+    // genuine article live instead of serving a non-answer.
+    if (!article.original || PLACEHOLDER_PATTERN.test(article.original)) return null;
+
+    return {
+      actCode: act.code,
+      articleNumber: article.number,
+      officialTitle: act.officialTitle,
+      popularTitle: act.popularTitle,
+      verbatimText: article.original,
+      sourceUrl: act.sourceUrl,
+      isLocallyCached: true,
+      isUnavailableNotice: false,
+    };
+  } catch (error) {
+    // A DB outage must never block resolution — step 2 (durable cache) and
+    // step 3 (live fetch) don't depend on this database at all.
+    console.warn('[normattiva_resolver] Local DB check failed (non-fatal, continuing):', error instanceof Error ? error.message : error);
+    return null;
   }
-  if (!act) return null;
+}
 
-  const articles = await prisma.article.findMany({ where: { actId: act.id }, orderBy: { orderIndex: 'asc' } });
-  if (articles.length === 0) return null;
+// ---------------------------------------------------------------------------
+// 3bis. STEP 2 — DURABLE SUPABASE CACHE (survives across serverless cold
+//       starts, unlike the module-level `transientCache` below)
+// ---------------------------------------------------------------------------
 
-  const article = articleNumber
-    ? articles.find((candidate) => normalizeArticleToken(candidate.number) === normalizeArticleToken(articleNumber))
-    : articles[0];
-  if (!article) return null;
+async function resolveFromDurableCache(actCode: string, articleNumber: string | undefined, key: string): Promise<ResolvedHistoricalAct | null> {
+  try {
+    const row = await prisma.normResolverCache.findUnique({ where: { cacheKey: key } });
+    if (!row) return null;
+    return {
+      actCode: row.actCode,
+      articleNumber: row.articleNumber,
+      officialTitle: row.officialTitle,
+      popularTitle: row.popularTitle ?? undefined,
+      verbatimText: row.verbatimText,
+      sourceUrl: row.sourceUrl,
+      isLocallyCached: true,
+      isUnavailableNotice: false,
+    };
+  } catch (error) {
+    console.warn('[normattiva_resolver] Durable cache read failed (non-fatal, continuing):', error instanceof Error ? error.message : error);
+    return null;
+  }
+}
 
-  // A placeholder row (ingestion honesty-note text) is not real verbatim
-  // text — treat it as a local miss so step 2 can still try to fetch the
-  // genuine article live instead of serving a non-answer.
-  if (!article.original || PLACEHOLDER_PATTERN.test(article.original)) return null;
-
-  return {
-    actCode: act.code,
-    articleNumber: article.number,
-    officialTitle: act.officialTitle,
-    popularTitle: act.popularTitle,
-    verbatimText: article.original,
-    sourceUrl: act.sourceUrl,
-    isLocallyCached: true,
-  };
+async function persistToDurableCache(resolved: ResolvedHistoricalAct, key: string): Promise<void> {
+  try {
+    await prisma.normResolverCache.upsert({
+      where: { cacheKey: key },
+      update: {
+        actCode: resolved.actCode,
+        articleNumber: resolved.articleNumber,
+        officialTitle: resolved.officialTitle,
+        popularTitle: resolved.popularTitle ?? null,
+        verbatimText: resolved.verbatimText,
+        sourceUrl: resolved.sourceUrl,
+      },
+      create: {
+        cacheKey: key,
+        actCode: resolved.actCode,
+        articleNumber: resolved.articleNumber,
+        officialTitle: resolved.officialTitle,
+        popularTitle: resolved.popularTitle ?? null,
+        verbatimText: resolved.verbatimText,
+        sourceUrl: resolved.sourceUrl,
+      },
+    });
+  } catch (error) {
+    // Best-effort — a failed cache write must never fail the resolution
+    // that's already in the caller's hands.
+    console.warn('[normattiva_resolver] Durable cache write failed (non-fatal):', error instanceof Error ? error.message : error);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -362,10 +444,11 @@ function buildInstitutionalFallback(
       'richiesta. Riprova tra qualche istante oppure consulta direttamente la fonte ufficiale al link riportato.',
     sourceUrl: normattivaPermalinkUrl(urn),
     isLocallyCached: false,
+    isUnavailableNotice: true,
   };
 }
 
-async function resolveFromNormattiva(actCode: string, articleNumber?: string): Promise<ResolvedHistoricalAct | null> {
+async function resolveFromNormattiva(actCode: string, articleNumber?: string, cacheKeyForWrite?: string): Promise<ResolvedHistoricalAct | null> {
   const known = findKnownFoundationAct(actCode);
   const urn = known?.urn ?? parseActCodeToUrn(actCode);
   if (!urn) return null; // actCode doesn't identify any recognizable act at all
@@ -373,7 +456,7 @@ async function resolveFromNormattiva(actCode: string, articleNumber?: string): P
   try {
     const fetched = await fetchArticleFromNormattiva(urn, articleNumber);
     if (fetched) {
-      return {
+      const resolved: ResolvedHistoricalAct = {
         actCode,
         articleNumber: fetched.article.number,
         officialTitle: known?.officialTitle ?? fetched.pageTitle ?? actCode,
@@ -381,7 +464,10 @@ async function resolveFromNormattiva(actCode: string, articleNumber?: string): P
         verbatimText: fetched.article.original,
         sourceUrl: normattivaPermalinkUrl(urn),
         isLocallyCached: false,
+        isUnavailableNotice: false,
       };
+      if (cacheKeyForWrite) await persistToDurableCache(resolved, cacheKeyForWrite);
+      return resolved;
     }
   } catch (error) {
     console.warn(
@@ -422,7 +508,13 @@ export async function resolveHistoricalNorm(options: ResolveNormOptions): Promis
     return local;
   }
 
-  const remote = await resolveFromNormattiva(actCode, articleNumber);
+  const durable = await resolveFromDurableCache(actCode, articleNumber, key);
+  if (durable) {
+    transientCache.set(key, durable);
+    return durable;
+  }
+
+  const remote = await resolveFromNormattiva(actCode, articleNumber, key);
   if (remote) {
     transientCache.set(key, remote);
     return remote;
@@ -440,4 +532,122 @@ export async function resolveMultipleHistoricalNorms(
 ): Promise<ResolvedHistoricalAct[]> {
   const resolved = await Promise.all(references.map((reference) => resolveHistoricalNorm(reference)));
   return resolved.filter((entry): entry is ResolvedHistoricalAct => entry !== null);
+}
+
+// ---------------------------------------------------------------------------
+// 8. ON-DEMAND KEYWORD/SUBJECT SEARCH (router of last resort)
+// ---------------------------------------------------------------------------
+
+/** Real Normattiva OpenData record shape — same endpoint and fields already
+ * verified by hand in `scripts/ingest_normattiva.ts`. */
+type RicercaAttoHit = {
+  dataGU: string;
+  codiceRedazionale: string;
+  denominazioneAtto: string; // 'LEGGE' | 'DECRETO-LEGGE' | 'DECRETO LEGISLATIVO' | ...
+  titoloAtto: string;
+  numeroProvvedimento: string;
+  annoProvvedimento: string;
+  dataEmanazione: string; // "YYYY-MM-DDT..."
+};
+
+const DENOMINAZIONE_TO_URN_TYPE: Record<string, string> = {
+  LEGGE: 'legge',
+  'DECRETO-LEGGE': 'decreto.legge',
+  'DECRETO LEGISLATIVO': 'decreto.legislativo',
+};
+
+const DENOMINAZIONE_TO_LABEL: Record<string, string> = {
+  LEGGE: 'L.',
+  'DECRETO-LEGGE': 'D.L.',
+  'DECRETO LEGISLATIVO': 'D.Lgs.',
+};
+
+async function ricercaSemplice(testoRicerca: string, numeroElementiPerPagina: number): Promise<RicercaAttoHit[]> {
+  const response = await fetchWithTimeout(`${NORMATTIVA_OPENDATA_API}/api/v1/ricerca/semplice`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      testoRicerca,
+      orderType: 'recente',
+      paginazione: { paginaCorrente: 1, numeroElementiPerPagina },
+    }),
+  });
+  if (!response.ok) return [];
+  const json = (await response.json().catch(() => null)) as { listaAtti?: RicercaAttoHit[] } | null;
+  return json?.listaAtti ?? [];
+}
+
+async function dettaglioAttoHtml(hit: RicercaAttoHit): Promise<string | null> {
+  const response = await fetchWithTimeout(`${NORMATTIVA_OPENDATA_API}/api/v1/atto/dettaglio-atto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ dataGU: hit.dataGU, codiceRedazionale: hit.codiceRedazionale, formatoRichiesta: 'V' }),
+  });
+  if (!response.ok) return null;
+  const json = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    data?: { atto?: { articoloHtml?: string } };
+  } | null;
+  return json?.data?.atto?.articoloHtml ?? null;
+}
+
+/**
+ * Router of last resort for requirement #4: resolves norms not by a
+ * precisely-known `actCode`/URN but by free-text subject/keyword search
+ * against Normattiva's own OpenData index (`ricerca/semplice` — the exact
+ * same real, verified endpoint `scripts/ingest_normattiva.ts` uses for
+ * ingestion). Every hit's Article 1 is fetched live via `dettaglio-atto`
+ * and only kept if genuine verbatim text came back — never a fabricated or
+ * placeholder result, and never an `isUnavailableNotice` entry (a hit that
+ * can't be fetched is simply dropped, since — unlike a specific act the
+ * user explicitly named — there is no single "known identity" worth
+ * degrading to a fallback notice for here). Successful hits are cached
+ * exactly like any other resolution (transient + durable Supabase).
+ */
+export async function searchNormattivaByKeyword(query: string, limit = 2): Promise<ResolvedHistoricalAct[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  try {
+    const hits = await ricercaSemplice(trimmed, Math.max(limit * 3, 6));
+    const usable = hits.filter((hit) => hit.denominazioneAtto in DENOMINAZIONE_TO_LABEL).slice(0, limit);
+
+    const resolved: ResolvedHistoricalAct[] = [];
+    for (const hit of usable) {
+      const label = DENOMINAZIONE_TO_LABEL[hit.denominazioneAtto];
+      const actCode = `${label} ${hit.numeroProvvedimento}/${hit.annoProvvedimento}`;
+      const key = cacheKey(actCode);
+
+      const cached = transientCache.get(key);
+      if (cached) {
+        resolved.push(cached);
+        continue;
+      }
+
+      const html = await dettaglioAttoHtml(hit);
+      if (!html) continue;
+      const original = stripTags(html);
+      if (!original || original.length < 100) continue;
+
+      const officialTitle = stripTags(hit.titoloAtto).replace(/\s*\(\w+\)\s*$/, '') || actCode;
+      const urn: NormattivaUrn = { tipo: DENOMINAZIONE_TO_URN_TYPE[hit.denominazioneAtto], date: hit.dataEmanazione.slice(0, 10), numero: hit.numeroProvvedimento };
+      const result: ResolvedHistoricalAct = {
+        actCode,
+        articleNumber: '1',
+        officialTitle,
+        verbatimText: original,
+        sourceUrl: normattivaPermalinkUrl(urn),
+        isLocallyCached: false,
+        isUnavailableNotice: false,
+      };
+
+      transientCache.set(key, result);
+      await persistToDurableCache(result, key);
+      resolved.push(result);
+    }
+    return resolved;
+  } catch (error) {
+    console.warn('[normattiva_resolver] Keyword search failed (non-fatal):', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
